@@ -1,15 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"github.com/m4rw3r/uuid"
 	"net/http"
 
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
 )
-
 
 func members(c web.C, w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
@@ -28,17 +27,17 @@ func member(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func newMember(c web.C, w http.ResponseWriter, r *http.Request) {
-    var nMember Member
+	var nMember Member
 	decoder := json.NewDecoder(r.Body)
-    err := decoder.Decode(&nMember)
-    if err != nil {
-        http.Error(w, err.Error(), 500)
-    }
+	err := decoder.Decode(&nMember)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
 	uuid, _ := uuid.V4()
 	nMember.UUID = uuid
 	addMember(nMember)
-	w.Header().Set("Location", "/member/" + uuid.String())
-    w.WriteHeader(201)
+	w.Header().Set("Location", "/member/"+uuid.String())
+	w.WriteHeader(201)
 }
 
 func main() {

@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"time"
 	"github.com/m4rw3r/uuid"
+	"time"
 )
 
 var dummyUUIDs = createUUIDs(5)
@@ -12,20 +12,20 @@ var dummyMembers = []Member{
 		UUID: dummyUUIDs[0],
 		Profile: MemberProfile{
 			Birthday: time.Date(1979, time.April, 14, 0, 0, 0, 0, time.Local),
-			Name: "Morten Knutsen",
-			Email: "knumor@gmail.com",
+			Name:     "Morten Knutsen",
+			Email:    "knumor@gmail.com",
 		},
-		Nick: "Panzer",
+		Nick:   "Panzer",
 		Active: true,
 	},
 	Member{
 		UUID: dummyUUIDs[1],
 		Profile: MemberProfile{
 			Birthday: time.Date(1979, time.October, 20, 0, 0, 0, 0, time.Local),
-			Name: "Bjørn Helge Kopperud",
-			Email: "bjorn@kjekkegutter.no",
+			Name:     "Bjørn Helge Kopperud",
+			Email:    "bjorn@kjekkegutter.no",
 		},
-		Nick: "Bjøro",
+		Nick:   "Bjøro",
 		Active: true,
 	},
 }
