@@ -1,0 +1,15 @@
+{
+	"ImportPath": "github.com/knumor/ckpt-backend-services",
+	"GoVersion": "go1.4.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/m4rw3r/uuid",
+			"Rev": "e3318cd4732c87ed59b1d4320dad2ff88fd184f7"
+		},
+		{
+			"ImportPath": "github.com/zenazn/goji",
+			"Comment": "v0.9.0-18-geaa649a",
+			"Rev": "eaa649ab77fd613bb3d44dde6b4e6043a01eee66"
+		}
+	]
+}
