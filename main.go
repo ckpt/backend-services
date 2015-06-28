@@ -2,48 +2,169 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/m4rw3r/uuid"
 	"net/http"
 
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
+
+	"github.com/ckpt/backend-services/players"
 )
 
-func members(c web.C, w http.ResponseWriter, r *http.Request) {
-	encoder := json.NewEncoder(w)
-	encoder.Encode(getMembers())
+type appError struct {
+	Error   error
+	Message string
+	Code    int
 }
 
-func member(c web.C, w http.ResponseWriter, r *http.Request) {
+type appHandler func(web.C, http.ResponseWriter, *http.Request) *appError
+
+var currentuser string
+
+func (fn appHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
+	if e := fn(c, w, r); e != nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(e.Code)
+		encoder := json.NewEncoder(w)
+		encoder.Encode(map[string]string{"error": e.Message})
+	}
+}
+
+func listAllPlayers(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	playerlist, err := players.AllPlayers()
+	if err != nil {
+		return &appError{err, "Cant load players", 500}
+	}
+	encoder := json.NewEncoder(w)
+	encoder.Encode(playerlist)
+	return nil
+}
+
+func getPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
-	member, err := getMember(uuid)
+	player, err := players.PlayerByUUID(uuid)
 	if err != nil {
-		http.Error(w, http.StatusText(404), 404)
-		return
+		return &appError{err, "Cant find player", 404}
 	}
 	encoder := json.NewEncoder(w)
-	encoder.Encode(member)
+	encoder.Encode(player)
+	return nil
 }
 
-func newMember(c web.C, w http.ResponseWriter, r *http.Request) {
-	var nMember Member
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&nMember)
+func getPlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	uuid, err := uuid.FromString(c.URLParams["uuid"])
+	player, err := players.PlayerByUUID(uuid)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		return &appError{err, "Cant find player", 404}
 	}
-	uuid, _ := uuid.V4()
-	nMember.UUID = uuid
-	addMember(nMember)
-	w.Header().Set("Location", "/member/"+uuid.String())
+	encoder := json.NewEncoder(w)
+	encoder.Encode(player.Profile)
+	return nil
+}
+
+func updatePlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	uuid, err := uuid.FromString(c.URLParams["uuid"])
+	player, err := players.PlayerByUUID(uuid)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+	tempPlayer := new(players.Player)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(tempPlayer); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if err := player.SetActive(tempPlayer.Active); err != nil {
+		return &appError{err, "Failed to set active status", 500}
+	}
+	if err := player.SetNick(tempPlayer.Nick); err != nil {
+		return &appError{err, "Failed to set nick", 500}
+	}
+	if err := player.SetProfile(tempPlayer.Profile); err != nil {
+		return &appError{err, "Failed to set player profile", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+func updatePlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	uuid, err := uuid.FromString(c.URLParams["uuid"])
+	player, err := players.PlayerByUUID(uuid)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+	tempProfile := new(players.Profile)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(tempProfile); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if err := player.SetProfile(*tempProfile); err != nil {
+		return &appError{err, "Failed to set player profile", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+func createNewPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	nPlayer := new(players.Player)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(nPlayer); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+	nPlayer, err := players.NewPlayer(nPlayer.Nick, nPlayer.Profile)
+	if err != nil {
+		return &appError{err, "Failed to create new player", 500}
+	}
+	w.Header().Set("Location", "/players/"+nPlayer.UUID.String())
 	w.WriteHeader(201)
+	return nil
+}
+
+func getUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	uuid, err := uuid.FromString(c.URLParams["uuid"])
+	player, err := players.PlayerByUUID(uuid)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+	encoder := json.NewEncoder(w)
+	encoder.Encode(map[string]string{"username": player.User().Username})
+	return nil
+}
+
+func setUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	uuid, err := uuid.FromString(c.URLParams["uuid"])
+	player, err := players.PlayerByUUID(uuid)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+	tempUser := new(players.User)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(tempUser); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+	user, err := players.UserByName(tempUser.Username)
+	if err != nil {
+		return &appError{err, "Cant find user", 400}
+	}
+
+	if err := player.SetUser(*user); err != nil {
+		return &appError{err, "Failed to set user for player", 500}
+	}
+	w.WriteHeader(204)
+	return nil
 }
 
 func main() {
-	fmt.Printf("%+v\n", getMembers())
-	goji.Get("/members", members)
-	goji.Post("/members", newMember)
-	goji.Get("/member/:uuid", member)
+	//fmt.Printf("%+v\n", getMembers())
+	currentuser = "mortenk"
+	goji.Get("/players", appHandler(listAllPlayers))
+	goji.Post("/players", appHandler(createNewPlayer))
+	goji.Get("/players/:uuid", appHandler(getPlayer))
+	goji.Put("/players/:uuid", appHandler(updatePlayer))
+	goji.Get("/players/:uuid/profile", appHandler(getPlayerProfile))
+	goji.Put("/players/:uuid/profile", appHandler(updatePlayerProfile))
+	goji.Get("/players/:uuid/user", appHandler(getUserForPlayer))
+	goji.Put("/players/:uuid/user", appHandler(setUserForPlayer))
 	goji.Serve()
 }

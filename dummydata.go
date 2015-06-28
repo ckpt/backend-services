@@ -53,6 +53,6 @@ func getMember(memberID uuid.UUID) (Member, error) {
 	return Member{}, errors.New("Not found")
 }
 
-func addMember(newMember Member) {
-	dummyMembers = append(dummyMembers[:], newMember)
+func addMember(newMember *Member) {
+	dummyMembers = append(dummyMembers[:], *newMember)
 }

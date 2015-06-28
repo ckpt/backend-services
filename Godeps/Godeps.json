@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/knumor/ckpt-backend-services",
+	"ImportPath": "github.com/ckpt/backend-services",
 	"GoVersion": "go1.4.2",
 	"Deps": [
 		{

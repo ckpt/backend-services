@@ -44,7 +44,7 @@ Tables:
 
 ## proposed backend services
 
-### Member service
+### Player service
 
 Local Data:
 
@@ -68,41 +68,65 @@ Local Data:
 
 Possible Redis storage format:
 
-  * SADD members uuid
-  * HMSET member:uuid:profile username myuser pwhash 312ae47c3d1dd13 email foo@example.com
-  * SET member:uuid:picture `jpeg-data`
-  * SET member:uuid:nick MyNick
-  * SADD member:uuid:debts member-uuid
-  * HMSET member:uuid:debt:member-uuid amount value due datetime
-  * SADD member:uuid:quotes qoute
-  * SET member:uuid:votes `full json`
-  * SET member:uuid:gossip `full json`
-  * SET member:uuid:complaints `full json`
-  * HMSET member:uuid:notify news false analysis true
-  
+  * SADD players uuid
+  * SET player:uuid:user username
+  * SADD users username
+  * HMSET user:username username myuser pwhash 312ae47c3d1dd13 admin false apitoken xxxxxxxx
+  * HMSET user:username:notify news false analysis true
+  * HMSET player:uuid:profile email foo@example.com name "Morten Knutsen" description "The boss"
+  * SET player:uuid:picture `jpeg-data`
+  * SET player:uuid:nick MyNick
+  * SADD player:uuid:debts debt-uuid
+  * HMSET player:uuid:debt:debt-uuid who player-uuid amount value due datetime
+  * SADD player:uuid:quotes qoute
+  * SET player:uuid:votes `full json`
+  * SET player:uuid:gossip `full json`
+  * SET player:uuid:complaints `full json`
+ 
 Operations:
 
-  * create new member (admin only)
-  * delete member (admin only)
-  * get active/retired
-  * set active/retired (admin only)
-  * get/set nick (set is admin)
-  * set/get basic profile info
-  * (api_token management)
-  * (re)set password
-  * get totals (played tourneys/winnings/loss, season/all time)
-  * get awards (season/all time)
-  * compare to
-  * get debt
-  * set debt (only other members)
-  * get quotes
-  * set quotes (only other members)
-  * set votes (e.g. favourite, loser)
-  * get gossip
-  * set gossip (only other members)
-  * get complaints
-  * set complaints (only other members)
-  * get/set notification settings
+  What                                 API endpoint
+
+  * create new player (admin only)  -> POST /players
+  * get all players                 -> GET /players
+  * delete player (admin only)      -> DELETE /players/:uuid
+  * get player info                 -> GET /players/:uuid
+  * set player nick (admin only)    -> PUT /players/:uuid/
+  * set player active status (admin)-> PUT /players/:uuid/
+  * set user for player (admin)     -> PUT /players/:uuid/user
+  * get basic profile info          -> GET /players/:uuid/profile
+  * set basic profile info          -> PUT /players/:uuid/profile
+  * get totals                      -> GET /players/:uuid/winnings
+    (played tourneys/winnings/loss,
+     season/all time)
+  * get awards                      -> GET /players/:uuid/awards
+    (season/all time)
+  * compare to                      -> GET /players/:uuid/compare/:otheruuid
+  * get debt                        -> GET /players/:uuid/debts
+  * ceate debt (other players)      -> POST /players/:uuid/debts
+  * delete debt (other players)     -> DELETE /players/:uuid/debts/:debtuuid
+  * get quotes                      -> GET /players/quotes
+                                    -> GET /players/:uuid/quotes
+  * set quotes (only other players) -> POST /players/:uuid/quotes
+  * set votes                       -> PUT /players/:uuid/votes
+    (e.g. favourite, loser)
+  * get gossip                      -> GET /players/gossip
+                                    -> GET /players/:uuid/gossip
+  * set gossip (only other players) -> PUT /players/:uuid/gossip
+  * set complaints                  -> POST /players/:uuid/complaints
+  * get complaints                  -> GET /players/:uuid/complaints
+  * get complaints by other player  -> GET /players/:uuid/complaints/:playeruuid
+
+  * get tasks                       -> GET /players/tasks
+                                    -> GET /players/:uuid/tasks
+  * create user account             -> POST /users
+  * remove user account             -> DELETE /users/:username
+  * lock user                       -> PUT /users/:username
+  * (re)set password?               -> PUT /users/:username
+  * get notification settings       -> GET /users/:username/settings
+  * set notification settings       -> PUT /users/:username/settings
+  * get userinfo                    -> GET /users/:username
+
 
 ### Tournament service
 
@@ -132,22 +156,40 @@ Possible Redis storage format:
   * SET tournament:uuid:catering catering-uuid
   * SET tournament:uuid:stake 100
   * SET tournament:uuid:season 2015
-  * SADD tournament:uuid:noshows member-uuid
-  * ZADD tournament:uuid:winnings 800 member-uuid
-  * ZADD tournament:uuid:winnings -200 member-uuid
-  * SADD tournament:uuid:bettingpools member-uuid
-  * SET tournament:uuid:bettingpool:member-uuid `full json`
+  * HMSET tournament:uuid:noshows player-uuid "Taktisk fravær" player-uuid2 "Fisketur"
+  * ZADD tournament:uuid:winnings 800 player-uuid
+  * ZADD tournament:uuid:winnings -200 player-uuid
+  * SADD tournament:uuid:bettingpools player-uuid
+  * SET tournament:uuid:bettingpool:player-uuid `full json`
 
 Operations:
 
-  * CRUD on local data
-  * R for all, CUD is admin only
-  * get result
-  * set result (admin only)
-  * get standings (season/date range/all time, leader/placement/points/heads up etc..)
-  * set betting pool entry (once per player)
-  * get betting pool entries
-  * get betting pool results
+  What                                 API endpoint
+
+  * create new season               -> POST /seasons
+  * get seasons                     -> GET /seasons
+  * get season tournaments?         -> GET /season/:year/tournaments
+  * get season standings            -> GET /season/:year/standings
+  * get tournaments                 -> GET /tournaments
+  * create new tournament           -> POST /tournaments
+  * delete tournament               -> DELETE /tournaments/:uuid
+  * get basic tournament info       -> GET /tournaments/:uuid
+  * update basic tournament info    -> PUT /tournaments/:uuid
+  * set tournament result           -> PUT /tournaments/:uuid/result
+  * get tournament result           -> GET /tournaments/:uuid/result
+  * get tournament players          -> GET /tournaments/:uuid/players
+  * add tournament noshow           -> POST /tournaments/:uuid/noshows
+  * set noshow reason               -> PUT /tournaments/:uuid/noshows/:playeruuid
+  * remove tournament noshow        -> DELETE /tournaments/:uuid/noshows/:playeruuid
+  * get tournament noshows          -> GET /tournaments/:uuid/noshows
+
+  * set betting pool entry          -> PUT /tournaments/:uuid/bettingpool/:playeruuid
+  * delete betting pool entry       -> DELETE /tournaments/:uuid/bettingpool/:playeruuid
+  * get betting pool entries        -> GET /tournaments/:uuid/bettingpool
+  * get betting pool results        -> GET /tournaments/:uuid/bettingpool/results
+
+  * get standings                   -> GET /tournaments/standings
+    (season/date range/all time, leader/placement/points/heads up etc..)
   
 ### Location service
 
@@ -162,6 +204,20 @@ Local Data:
   * facilities
   * pictures
 
+Possible Redis storage format:
+
+  * SADD locations uuid
+  * HMSET location:uuid:basicinfo host player-uuid url http://gulesider.no/Xy97V3 name Heimdal description "Arenaen stod ferdig ..."
+  * SADD location:uuid:pictures `jpeg-data`
+
+Operations:
+
+  What                                 API endpoint
+
+  * add new location                -> POST /locations
+  * update location info            -> PUT /locations/:uuid
+  * remove location                 -> DELETE /locations/:uuid
+
 ### Catering service
 
 Local Data:
@@ -172,6 +228,24 @@ Local Data:
   * meal
   * votes
 
+Possible Redis storage format:
+
+  * SADD caterings uuid
+  * HMSET catering:uuid:basicinfo caterer player-uuid tournament tournament-uuid meal "Kokte grillpølser"
+  * SADD catering:uuid:votes player-uuid    ZADD?
+  * SET catering:uuid:votes:player-uuid 4    ^^?
+
+Operations:
+
+  What                                 API endpoint
+
+  * add new catering                -> POST /caterings
+  * update catering info            -> PUT /caterings/:uuid
+  * remove catering                 -> DELETE /caterings/:uuid
+  * vote on catering                -> POST /caterings/:uuid/votes
+  * update vote                     -> PUT /caterings/:uuid/votes/:playeruuid
+  * remove vote                     -> DELETE /caterings/:uuid/votes/:playeruuid
+  
 ### Transport service
 
 ### News service
