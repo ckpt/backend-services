@@ -1,1 +1,1 @@
-web: ckpt-backend-services
+web: backend-services
