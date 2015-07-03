@@ -15,6 +15,10 @@
 			"Rev": "e3318cd4732c87ed59b1d4320dad2ff88fd184f7"
 		},
 		{
+			"ImportPath": "github.com/rs/cors",
+			"Rev": "5e4ce6bc0ecd3472f6f943666d84876691be2ced"
+		},
+		{
 			"ImportPath": "github.com/zenazn/goji",
 			"Comment": "v0.9.0-18-geaa649a",
 			"Rev": "eaa649ab77fd613bb3d44dde6b4e6043a01eee66"
