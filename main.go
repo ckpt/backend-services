@@ -27,7 +27,8 @@ func (fn appHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(e.Code)
 		encoder := json.NewEncoder(w)
-		encoder.Encode(map[string]string{"error": e.Message})
+		encoder.Encode(map[string]string{"error": e.Error.Error() +
+			" (" + e.Message + ")"})
 	}
 }
 
@@ -52,7 +53,7 @@ func getAllPlayerQuotes(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 	}
 	quotes := make(map[string][]string)
 	for _, player := range playerlist {
-		pq := player.Quotes()
+		pq := player.Quotes
 		if len(pq) > 0 {
 			quotes[player.UUID.String()] = append(quotes[player.UUID.String()], pq...)
 		}
@@ -63,6 +64,8 @@ func getAllPlayerQuotes(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 }
 
 func getPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
 	if err != nil {
@@ -74,6 +77,8 @@ func getPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 }
 
 func getPlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
 	if err != nil {
@@ -85,6 +90,8 @@ func getPlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appError
 }
 
 func updatePlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
 	if err != nil {
@@ -110,6 +117,8 @@ func updatePlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 }
 
 func updatePlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
 	if err != nil {
@@ -129,6 +138,8 @@ func updatePlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appEr
 }
 
 func createNewPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	nPlayer := new(players.Player)
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(nPlayer); err != nil {
@@ -143,7 +154,30 @@ func createNewPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError 
 	return nil
 }
 
+func createNewUser(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	type newUser struct {
+		Player uuid.UUID `json:"player"`
+		players.User
+	}
+	nUser := new(newUser)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(nUser); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+	_, err := players.NewUser(nUser.Player, &nUser.User)
+	if err != nil {
+		return &appError{err, "Failed to create new user", 500}
+	}
+	w.Header().Set("Location", "/players/"+nUser.Player.String()+"/user")
+	w.WriteHeader(201)
+	return nil
+}
+
 func getUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
 	if err != nil {
@@ -155,6 +189,8 @@ func getUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError
 }
 
 func setUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
 	if err != nil {
@@ -189,5 +225,7 @@ func main() {
 	goji.Put("/players/:uuid/profile", appHandler(updatePlayerProfile))
 	goji.Get("/players/:uuid/user", appHandler(getUserForPlayer))
 	goji.Put("/players/:uuid/user", appHandler(setUserForPlayer))
+
+	goji.Post("/users", appHandler(createNewUser))
 	goji.Serve()
 }

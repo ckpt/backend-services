@@ -1,5 +1,10 @@
 package players
 
+import "errors"
+import "github.com/m4rw3r/uuid"
+
+//import "fmt"
+
 // The user associated with a player
 type User struct {
 	Username string `json:"username"`
@@ -8,6 +13,21 @@ type User struct {
 	Admin    bool         `json:"admin"`
 	Locked   bool         `json:"locked"`
 	Settings UserSettings `json:"settings"`
+}
+
+// Create a user
+func NewUser(player uuid.UUID, userdata *User) (*User, error) {
+	p, err := storage.Load(player)
+	if err != nil {
+		return nil, err
+	}
+	p.User = *userdata
+	err = storage.Store(p)
+	if err != nil {
+		return nil,
+			errors.New(err.Error() + " - Could not write user to storage")
+	}
+	return &p.User, nil
 }
 
 // The user preferences/settings of the user

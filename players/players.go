@@ -15,13 +15,14 @@ type Player struct {
 	Profile Profile   `json:"profile"`
 	Nick    string    `json:"nick"`
 	User    User      `json:"user"`
-	Active  bool `json:"active"`
+	Active  bool      `json:"active"`
 	// Quotes are just strings set by other players
-	quotes []string
+	Quotes []string `json:"quotes"`
 	// Gossip is one string from each
-	// of the other players, indexed by uuid
-	gossip     map[uuid.UUID]string
-	complaints []Complaint
+	// of the other players, indexed by uuid as string
+	Gossip     map[string]string `json:"gossip"`
+	Complaints []Complaint       `json:"complaints"`
+	Votes      []Vote            `json:"votes"`
 }
 
 // The basic profile of the player
@@ -49,6 +50,11 @@ type Complaint struct {
 	Content string  `json:"content"`
 }
 
+type Vote struct {
+	From *Player  `json:"from"`
+	Type VoteType `json:"type"`
+}
+
 // A storage interface for Players
 type PlayerStorage interface {
 	Store(*Player) error
@@ -74,7 +80,7 @@ func NewPlayer(nick string, profile Profile) (*Player, error) {
 	p.Profile = profile
 	err = storage.Store(p)
 	if err != nil {
-		return nil, errors.New("Could not write player to storage")
+		return nil, errors.New(err.Error() + " - Could not write player to storage")
 	}
 	return p, nil
 }
@@ -128,4 +134,3 @@ func (p *Player) SetActive(active bool) error {
 	}
 	return nil
 }
-func (p *Player) Quotes() []string { return p.quotes }

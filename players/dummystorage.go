@@ -32,8 +32,8 @@ func (dps *DummyPlayerStorage) init() {
 				Email:    "knumor@gmail.com",
 			},
 			Nick:   "Panzer",
-			quotes: []string{"Blinde høner kan også finne korn!"},
-			User: *dps.users[0],
+			Quotes: []string{"Blinde høner kan også finne korn!"},
+			User:   *dps.users[0],
 			Active: true,
 		},
 		&Player{
@@ -44,7 +44,7 @@ func (dps *DummyPlayerStorage) init() {
 				Email:    "bjorn@kjekkegutter.no",
 			},
 			Nick:   "Bjøro",
-			quotes: []string{"Horespill!"},
+			Quotes: []string{"Horespill!"},
 			Active: true,
 		},
 	}
