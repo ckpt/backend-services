@@ -7,7 +7,15 @@ import (
 )
 
 // We use dummy in memory storage for now
-var storage PlayerStorage = NewDummyPlayerStorage()
+var storage PlayerStorage = NewRedisPlayerStorage()
+
+// Constants
+type VoteType int
+
+const (
+	VOTE_FAV VoteType = iota
+	VOTE_LOSER
+)
 
 // A Player is a player in CKPT, current or former.o// It also contains a User.
 type Player struct {

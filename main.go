@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/m4rw3r/uuid"
 	"net/http"
+	//"fmt"
 
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
