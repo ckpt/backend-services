@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"github.com/m4rw3r/uuid"
 	"net/http"
-	//"fmt"
+	"errors"
+	"fmt"
 
+	"github.com/rs/cors"
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
 
@@ -214,9 +216,48 @@ func setUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError
 	return nil
 }
 
+func login(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	type LoginRequest struct {
+		Username string
+		Password string
+	}
+
+	loginReq := new(LoginRequest)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(loginReq); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+	// Hard code for now
+	fmt.Printf("%+v\n", loginReq)
+	if (loginReq.Username == "mortenk" &&
+		loginReq.Password == "testing123") {
+		authUser, err := players.UserByName(loginReq.Username)
+		if err != nil {
+			return &appError{err, "Failed to fetch user data", 500}
+		}
+		if authUser.Locked {
+			return &appError{errors.New("Locked"), "User locked", 403}
+		}
+		encoder := json.NewEncoder(w)
+		encoder.Encode(authUser)
+		return nil
+	}
+
+	// Else, forbidden
+	w.WriteHeader(403)
+	return nil
+}
+
 func main() {
 	//fmt.Printf("%+v\n", getMembers())
-	currentuser = "mortenk"
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+	})
+	goji.Use(c.Handler)
+
 	goji.Get("/players", appHandler(listAllPlayers))
 	goji.Post("/players", appHandler(createNewPlayer))
 	goji.Get("/players/quotes", appHandler(getAllPlayerQuotes))
@@ -228,5 +269,7 @@ func main() {
 	goji.Put("/players/:uuid/user", appHandler(setUserForPlayer))
 
 	goji.Post("/users", appHandler(createNewUser))
+
+	goji.Post("/login", appHandler(login))
 	goji.Serve()
 }
