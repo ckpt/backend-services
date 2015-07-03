@@ -14,7 +14,7 @@ type Player struct {
 	UUID    uuid.UUID `json:"uuid"`
 	Profile Profile   `json:"profile"`
 	Nick    string    `json:"nick"`
-	user    User
+	User    User      `json:"user"`
 	Active  bool `json:"active"`
 	// Quotes are just strings set by other players
 	quotes []string
@@ -96,7 +96,7 @@ func PlayerByUUID(uuid uuid.UUID) (*Player, error) {
 }
 
 func (p *Player) SetUser(user User) error {
-	p.user = user
+	p.User = user
 	err := storage.Store(p)
 	if err != nil {
 		return errors.New("Could not change player user")
@@ -104,7 +104,6 @@ func (p *Player) SetUser(user User) error {
 	return nil
 }
 
-func (p *Player) User() *User { return &p.user }
 func (p *Player) SetProfile(profile Profile) error {
 	p.Profile = profile
 	err := storage.Store(p)
@@ -129,3 +128,4 @@ func (p *Player) SetActive(active bool) error {
 	}
 	return nil
 }
+func (p *Player) Quotes() []string { return p.quotes }

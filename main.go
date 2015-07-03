@@ -23,6 +23,7 @@ var currentuser string
 
 func (fn appHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
 	if e := fn(c, w, r); e != nil {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(e.Code)
 		encoder := json.NewEncoder(w)
@@ -31,12 +32,33 @@ func (fn appHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request)
 }
 
 func listAllPlayers(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	playerlist, err := players.AllPlayers()
 	if err != nil {
 		return &appError{err, "Cant load players", 500}
 	}
 	encoder := json.NewEncoder(w)
 	encoder.Encode(playerlist)
+	return nil
+}
+
+func getAllPlayerQuotes(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	playerlist, err := players.AllPlayers()
+	if err != nil {
+		return &appError{err, "Cant load players", 500}
+	}
+	quotes := make(map[string][]string)
+	for _, player := range playerlist {
+		pq := player.Quotes()
+		if len(pq) > 0 {
+			quotes[player.UUID.String()] = append(quotes[player.UUID.String()], pq...)
+		}
+	}
+	encoder := json.NewEncoder(w)
+	encoder.Encode(quotes)
 	return nil
 }
 
@@ -128,7 +150,7 @@ func getUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError
 		return &appError{err, "Cant find player", 404}
 	}
 	encoder := json.NewEncoder(w)
-	encoder.Encode(map[string]string{"username": player.User().Username})
+	encoder.Encode(player.User)
 	return nil
 }
 
@@ -160,6 +182,7 @@ func main() {
 	currentuser = "mortenk"
 	goji.Get("/players", appHandler(listAllPlayers))
 	goji.Post("/players", appHandler(createNewPlayer))
+	goji.Get("/players/quotes", appHandler(getAllPlayerQuotes))
 	goji.Get("/players/:uuid", appHandler(getPlayer))
 	goji.Put("/players/:uuid", appHandler(updatePlayer))
 	goji.Get("/players/:uuid/profile", appHandler(getPlayerProfile))
