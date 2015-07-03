@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/m4rw3r/uuid"
-	"net/http"
 	"errors"
 	"fmt"
+	"github.com/m4rw3r/uuid"
+	"net/http"
 
 	"github.com/rs/cors"
 	"github.com/zenazn/goji"
@@ -232,8 +232,8 @@ func login(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	}
 	// Hard code for now
 	fmt.Printf("%+v\n", loginReq)
-	if (loginReq.Username == "mortenk" &&
-		loginReq.Password == "testing123") {
+	if loginReq.Username == "mortenk" &&
+		loginReq.Password == "testing123" {
 		authUser, err := players.UserByName(loginReq.Username)
 		if err != nil {
 			return &appError{err, "Failed to fetch user data", 500}
