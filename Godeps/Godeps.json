@@ -11,6 +11,11 @@
 			"Rev": "a47585eaae68b1d14b02940d2af1b9194f3caa9c"
 		},
 		{
+			"ImportPath": "github.com/imdario/mergo",
+			"Comment": "0.2.0-5-g61a5285",
+			"Rev": "61a52852277811e93e06d28e0d0c396284a7730b"
+		},
+		{
 			"ImportPath": "github.com/m4rw3r/uuid",
 			"Rev": "e3318cd4732c87ed59b1d4320dad2ff88fd184f7"
 		},
