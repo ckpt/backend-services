@@ -12,6 +12,7 @@ import (
 	"github.com/zenazn/goji/web"
 
 	"github.com/ckpt/backend-services/players"
+	"github.com/ckpt/backend-services/middleware"
 )
 
 type appError struct {
@@ -26,7 +27,6 @@ var currentuser string
 
 func (fn appHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
 	if e := fn(c, w, r); e != nil {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(e.Code)
 		encoder := json.NewEncoder(w)
@@ -36,7 +36,6 @@ func (fn appHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request)
 }
 
 func listAllPlayers(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	playerlist, err := players.AllPlayers()
 	if err != nil {
@@ -48,7 +47,6 @@ func listAllPlayers(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 }
 
 func getAllPlayerQuotes(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	playerlist, err := players.AllPlayers()
 	if err != nil {
@@ -67,7 +65,6 @@ func getAllPlayerQuotes(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 }
 
 func getPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
@@ -80,7 +77,6 @@ func getPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 }
 
 func getPlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
@@ -93,7 +89,6 @@ func getPlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appError
 }
 
 func updatePlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
@@ -120,7 +115,6 @@ func updatePlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 }
 
 func updatePlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
@@ -141,7 +135,6 @@ func updatePlayerProfile(c web.C, w http.ResponseWriter, r *http.Request) *appEr
 }
 
 func createNewPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	nPlayer := new(players.Player)
 	decoder := json.NewDecoder(r.Body)
@@ -158,7 +151,6 @@ func createNewPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError 
 }
 
 func createNewUser(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	type newUser struct {
 		Player uuid.UUID `json:"player"`
@@ -179,7 +171,6 @@ func createNewUser(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 }
 
 func getUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
@@ -192,8 +183,10 @@ func getUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError
 }
 
 func setUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if !c.Env["authIsAdmin"].(bool) {
+		return &appError{errors.New("Unauthorized"), "Admins only", 403}
+	}
 	uuid, err := uuid.FromString(c.URLParams["uuid"])
 	player, err := players.PlayerByUUID(uuid)
 	if err != nil {
@@ -255,8 +248,10 @@ func main() {
 	//fmt.Printf("%+v\n", getMembers())
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
+		AllowedHeaders: []string{"*"},
 	})
 	goji.Use(c.Handler)
+	goji.Use(middleware.TokenHandler)
 
 	goji.Get("/players", appHandler(listAllPlayers))
 	goji.Post("/players", appHandler(createNewPlayer))

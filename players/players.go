@@ -109,6 +109,19 @@ func PlayerByUUID(uuid uuid.UUID) (*Player, error) {
 	return storage.Load(uuid)
 }
 
+func PlayerByUserToken(token string) (*Player, error) {
+	players, err := storage.LoadAll()
+	if err != nil {
+		return nil, errors.New(err.Error() + " - Could not load player by token")
+	}
+	for _, p := range players {
+		if p.User.Apikey == token {
+			return p, nil
+		}
+	}
+	return nil, errors.New("Could not find player with given token")
+}
+
 func (p *Player) SetUser(user User) error {
 	p.User = user
 	err := storage.Store(p)
