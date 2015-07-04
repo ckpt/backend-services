@@ -5,14 +5,14 @@ import (
 	"strings"
 	//"fmt"
 
-	"github.com/zenazn/goji/web"
 	"github.com/ckpt/backend-services/players"
+	"github.com/zenazn/goji/web"
 )
 
 func TokenHandler(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if (r.URL.Path == "/login") {
-			h.ServeHTTP(w,r)
+		if r.URL.Path == "/login" {
+			h.ServeHTTP(w, r)
 			return
 		}
 		authzHeader := r.Header.Get("Authorization")
@@ -26,7 +26,7 @@ func TokenHandler(c *web.C, h http.Handler) http.Handler {
 		c.Env["authPlayer"] = p.UUID
 		c.Env["authUser"] = p.User.Username
 		c.Env["authIsAdmin"] = p.User.Admin
-		h.ServeHTTP(w,r)
+		h.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
 }

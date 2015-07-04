@@ -11,9 +11,9 @@ import (
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
 
-	"github.com/ckpt/backend-services/players"
 	"github.com/ckpt/backend-services/locations"
 	"github.com/ckpt/backend-services/middleware"
+	"github.com/ckpt/backend-services/players"
 )
 
 type appError struct {
@@ -244,7 +244,6 @@ func login(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.WriteHeader(403)
 	return nil
 }
-
 
 func createNewLocation(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

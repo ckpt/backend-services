@@ -2,8 +2,8 @@ package locations
 
 import (
 	"errors"
-	"github.com/m4rw3r/uuid"
 	"github.com/imdario/mergo"
+	"github.com/m4rw3r/uuid"
 )
 
 // We use dummy in memory storage for now
@@ -15,19 +15,19 @@ type Coord struct {
 }
 
 type Location struct {
-	UUID        uuid.UUID `json:"uuid"`
-	Host        uuid.UUID `json:"host"`
-	Profile     Profile   `json:"profile"`
-	Pictures    [][]byte  `json:"pictures"`
-	Active      bool      `json:"active"`
+	UUID     uuid.UUID `json:"uuid"`
+	Host     uuid.UUID `json:"host"`
+	Profile  Profile   `json:"profile"`
+	Pictures [][]byte  `json:"pictures"`
+	Active   bool      `json:"active"`
 }
 
 type Profile struct {
-	URL         string    `json:"url"`
-	Coordinates Coord     `json:"coordinates"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Facilities  []string  `json:"facilities"`
+	URL         string   `json:"url"`
+	Coordinates Coord    `json:"coordinates"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Facilities  []string `json:"facilities"`
 }
 
 // A storage interface for Locations
