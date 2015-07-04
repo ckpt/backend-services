@@ -49,7 +49,7 @@ func NewLocation(host uuid.UUID, lp Profile) (*Location, error) {
 	l.UUID, _ = uuid.V4()
 	l.Active = true
 	l.Host = host
-	if err := mergo.Merge(&l.Profile, lp); err != nil {
+	if err := mergo.MergeWithOverwrite(&l.Profile, lp); err != nil {
 		return nil, errors.New(err.Error() + " - Could not set initial location profile")
 	}
 	if err := storage.Store(l); err != nil {

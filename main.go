@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/rs/cors"
@@ -21,8 +20,6 @@ type appError struct {
 }
 
 type appHandler func(web.C, http.ResponseWriter, *http.Request) *appError
-
-var currentuser string
 
 func (fn appHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
 	if e := fn(c, w, r); e != nil {
@@ -49,7 +46,6 @@ func login(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 		return &appError{err, "Invalid JSON", 400}
 	}
 	// Hard code for now
-	fmt.Printf("%+v\n", loginReq)
 	if loginReq.Username == "mortenk" &&
 		loginReq.Password == "testing123" {
 		authUser, err := players.UserByName(loginReq.Username)
