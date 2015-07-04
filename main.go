@@ -99,5 +99,11 @@ func main() {
 	goji.Patch("/locations/:uuid", appHandler(updateLocationProfile))
 	goji.Post("/locations/:uuid/pictures", appHandler(addLocationPicture))
 
+	goji.Get("/tournaments", appHandler(listAllTournaments))
+	goji.Post("/tournaments", appHandler(createNewTournament))
+	goji.Get("/tournaments/:uuid", appHandler(getTournament))
+	goji.Put("/tournaments/:uuid", appHandler(updateTournamentInfo))
+	goji.Patch("/tournaments/:uuid", appHandler(updateTournamentInfo))
+
 	goji.Serve()
 }
