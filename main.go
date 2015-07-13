@@ -70,6 +70,7 @@ func main() {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedHeaders: []string{"*"},
+		AllowedMethods: []string{"GET", "PUT", "PATCH", "POST", "OPTIONS"},
 	})
 	goji.Use(c.Handler)
 	goji.Use(middleware.TokenHandler)
