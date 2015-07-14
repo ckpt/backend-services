@@ -45,6 +45,7 @@ func AuthUser(username string, password string) bool {
 	if err != nil {
 		return false
 	}
+	// No error from comparison means the hashes match
 	if err := bcrypt.CompareHashAndPassword([]byte(user.password), []byte(password)); err == nil {
 		return true
 	}
