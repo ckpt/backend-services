@@ -27,6 +27,14 @@
 			"ImportPath": "github.com/zenazn/goji",
 			"Comment": "v0.9.0-18-geaa649a",
 			"Rev": "eaa649ab77fd613bb3d44dde6b4e6043a01eee66"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/bcrypt",
+			"Rev": "f6a608df624ae17d57958a8a294c66da81730577"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/blowfish",
+			"Rev": "f6a608df624ae17d57958a8a294c66da81730577"
 		}
 	]
 }
