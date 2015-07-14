@@ -182,3 +182,33 @@ func setUserForPlayer(c web.C, w http.ResponseWriter, r *http.Request) *appError
 	w.WriteHeader(204)
 	return nil
 }
+
+func setUserPassword(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	if (!c.Env["authIsAdmin"].(bool) || c.Env["authPlayer"].(uuid.UUID) != pUUID) {
+		return &appError{errors.New("Unauthorized"), "Must be correct user or admin to set password", 403}
+	}
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	type PWUpdate struct {
+		Password string
+	}
+
+	pwupdate := new(PWUpdate)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(pwupdate); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if err := player.SetUserPassword(pwupdate.Password); err != nil {
+		return &appError{err, "Failed to set password for player", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}

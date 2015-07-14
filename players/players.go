@@ -3,6 +3,7 @@ package players
 import (
 	"errors"
 	"github.com/m4rw3r/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -127,6 +128,18 @@ func (p *Player) SetUser(user User) error {
 	err := storage.Store(p)
 	if err != nil {
 		return errors.New("Could not change player user")
+	}
+	return nil
+}
+
+func (p *Player) SetUserPassword(password string) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+    if err != nil {
+		return errors.New(err.Error() + " - Could not change player user password")
+	}
+	p.User.password = string(hashedPassword)
+	if err := storage.Store(p); err != nil {
+		return errors.New(err.Error() + " - Could not change player user password")
 	}
 	return nil
 }

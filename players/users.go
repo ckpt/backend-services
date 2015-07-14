@@ -2,6 +2,7 @@ package players
 
 import "errors"
 import "github.com/m4rw3r/uuid"
+import "golang.org/x/crypto/bcrypt"
 
 //import "fmt"
 
@@ -37,4 +38,13 @@ type UserSettings struct {
 
 func UserByName(username string) (*User, error) {
 	return storage.LoadUser(username)
+}
+
+func AuthUser(username string, password string) bool {
+	user, err := storage.LoadUser(username)
+	if err != nil { return false }
+	if err := bcrypt.CompareHashAndPassword([]byte(user.password), []byte(password)); err == nil {
+		return true
+	}
+	return false
 }

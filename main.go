@@ -32,7 +32,6 @@ func (fn appHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request)
 }
 
 func login(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	type LoginRequest struct {
@@ -45,23 +44,20 @@ func login(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	if err := decoder.Decode(loginReq); err != nil {
 		return &appError{err, "Invalid JSON", 400}
 	}
-	// Hard code for now
-	if loginReq.Username == "mortenk" &&
-		loginReq.Password == "testing123" {
-		authUser, err := players.UserByName(loginReq.Username)
-		if err != nil {
-			return &appError{err, "Failed to fetch user data", 500}
-		}
-		if authUser.Locked {
-			return &appError{errors.New("Locked"), "User locked", 403}
-		}
-		encoder := json.NewEncoder(w)
-		encoder.Encode(authUser)
-		return nil
+
+	if (!players.AuthUser(loginReq.Username, loginReq.Password)) {
+		return &appError{errors.New("Forbidden"), "Invalid username/password", 403}
 	}
 
-	// Else, forbidden
-	w.WriteHeader(403)
+	authUser, err := players.UserByName(loginReq.Username)
+	if err != nil {
+		return &appError{err, "Failed to fetch user data", 500}
+	}
+	if authUser.Locked {
+		return &appError{errors.New("Locked"), "User locked", 403}
+	}
+	encoder := json.NewEncoder(w)
+	encoder.Encode(authUser)
 	return nil
 }
 
@@ -86,6 +82,7 @@ func main() {
 	goji.Put("/players/:uuid/profile", appHandler(updatePlayerProfile))
 	goji.Get("/players/:uuid/user", appHandler(getUserForPlayer))
 	goji.Put("/players/:uuid/user", appHandler(setUserForPlayer))
+	goji.Put("/players/:uuid/user/password", appHandler(setUserPassword))
 
 	goji.Post("/users", appHandler(createNewUser))
 

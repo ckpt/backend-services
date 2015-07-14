@@ -94,11 +94,17 @@ func (rps *RedisPlayerStorage) LoadUser(username string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+	pwhash, err := redigo.String(conn.Do("GET", fmt.Sprintf("user:%s:pwhash", username)))
+	if err != nil {
+		return nil, err
+	}
+
 	uuid, _ := uuid.FromString(player)
 	p, err := rps.Load(uuid)
 	if err != nil {
 		return nil, err
 	}
+	p.User.password = pwhash
 	return &p.User, nil
 }
 
