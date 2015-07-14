@@ -45,7 +45,7 @@ func login(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 		return &appError{err, "Invalid JSON", 400}
 	}
 
-	if (!players.AuthUser(loginReq.Username, loginReq.Password)) {
+	if !players.AuthUser(loginReq.Username, loginReq.Password) {
 		return &appError{errors.New("Forbidden"), "Invalid username/password", 403}
 	}
 

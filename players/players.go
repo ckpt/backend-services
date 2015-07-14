@@ -134,7 +134,7 @@ func (p *Player) SetUser(user User) error {
 
 func (p *Player) SetUserPassword(password string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-    if err != nil {
+	if err != nil {
 		return errors.New(err.Error() + " - Could not change player user password")
 	}
 	p.User.password = string(hashedPassword)

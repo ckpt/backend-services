@@ -42,7 +42,9 @@ func UserByName(username string) (*User, error) {
 
 func AuthUser(username string, password string) bool {
 	user, err := storage.LoadUser(username)
-	if err != nil { return false }
+	if err != nil {
+		return false
+	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.password), []byte(password)); err == nil {
 		return true
 	}
