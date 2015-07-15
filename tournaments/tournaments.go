@@ -35,7 +35,7 @@ type Tournament struct {
 	Info    Info       `json:"info"`
 	Noshows []Absentee `json:"noshows"`
 	Result  Result     `json:"result"`
-	Played  time.Time  `json:"played"`
+	Played  bool       `json:"played"`
 	Bets    []Bet      `json:"bets"`
 }
 
