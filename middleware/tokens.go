@@ -17,6 +17,11 @@ func TokenHandler(c *web.C, h http.Handler) http.Handler {
 		}
 		authzHeader := r.Header.Get("Authorization")
 		token := strings.TrimPrefix(authzHeader, "CKPT ")
+		if token == authzHeader || len(token) < 6 {
+			w.WriteHeader(403)
+			w.Write([]byte("Invalid auth header or token"))
+			return
+		}
 		p, err := players.PlayerByUserToken(token)
 		if err != nil {
 			w.WriteHeader(403)
