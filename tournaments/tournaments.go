@@ -119,3 +119,22 @@ func (t *Tournament) UpdateInfo(tdata Info) error {
 	}
 	return nil
 }
+
+func (t *Tournament) SetPlayed(isPlayed bool) error {
+	t.Played = isPlayed
+	err := storage.Store(t)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store updated tournament state")
+	}
+	return nil
+}
+
+func (t *Tournament) SetResult(result Result) error {
+	t.Played = true
+	t.Result = result
+	err := storage.Store(t)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store tournament result")
+	}
+	return nil
+}

@@ -98,6 +98,9 @@ func main() {
 	goji.Get("/tournaments/:uuid", appHandler(getTournament))
 	goji.Put("/tournaments/:uuid", appHandler(updateTournamentInfo))
 	goji.Patch("/tournaments/:uuid", appHandler(updateTournamentInfo))
+	goji.Put("/tournaments/:uuid/played", appHandler(setTournamentPlayed))
+	goji.Get("/tournaments/:uuid/result", appHandler(getTournamentResult))
+	goji.Put("/tournaments/:uuid/result", appHandler(setTournamentResult))
 
 	goji.Serve()
 }

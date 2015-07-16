@@ -66,3 +66,62 @@ func updateTournamentInfo(c web.C, w http.ResponseWriter, r *http.Request) *appE
 	w.WriteHeader(204)
 	return nil
 }
+
+func setTournamentPlayed(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	uuid, err := uuid.FromString(c.URLParams["uuid"])
+	tournament, err := tournaments.TournamentByUUID(uuid)
+	if err != nil {
+		return &appError{err, "Cant find tournament", 404}
+	}
+
+	tempInfo := make(map[string]bool)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&tempInfo); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if err := tournament.SetPlayed(tempInfo["played"]); err != nil {
+		return &appError{err, "Failed to update tournament played status", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+func setTournamentResult(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	tID, err := uuid.FromString(c.URLParams["uuid"])
+	tournament, err := tournaments.TournamentByUUID(tID)
+	if err != nil {
+		return &appError{err, "Cant find tournament", 404}
+	}
+
+	type Result struct {
+		Result []uuid.UUID
+	}
+
+	resultData := new(Result)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(resultData); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if err := tournament.SetResult(resultData.Result); err != nil {
+		return &appError{err, "Failed to update tournament result", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+func getTournamentResult(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	tID, err := uuid.FromString(c.URLParams["uuid"])
+	tournament, err := tournaments.TournamentByUUID(tID)
+	if err != nil {
+		return &appError{err, "Cant find tournament", 404}
+	}
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(tournament.Result)
+	return nil
+}
