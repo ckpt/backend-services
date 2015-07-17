@@ -107,6 +107,10 @@ func TournamentByUUID(uuid uuid.UUID) (*Tournament, error) {
 	return storage.Load(uuid)
 }
 
+func TournamentsBySeason(season int) ([]*Tournament, error) {
+	return storage.LoadBySeason(season)
+}
+
 func (t *Tournament) UpdateInfo(tdata Info) error {
 	if err := mergo.MergeWithOverwrite(&t.Info, tdata); err != nil {
 		return errors.New(err.Error() + " - Could not update tournament info")

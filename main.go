@@ -102,5 +102,9 @@ func main() {
 	goji.Get("/tournaments/:uuid/result", appHandler(getTournamentResult))
 	goji.Put("/tournaments/:uuid/result", appHandler(setTournamentResult))
 
+	goji.Get("/seasons", appHandler(listAllSeasons))
+	goji.Get("/seasons/:year/tournaments", appHandler(listTournamentsBySeason))
+	goji.Get("/seasons/:year/standings", appHandler(getSeasonStandings))
+
 	goji.Serve()
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/m4rw3r/uuid"
 	"github.com/zenazn/goji/web"
 	"net/http"
+	"sort"
+	"strconv"
 )
 
 func createNewTournament(c web.C, w http.ResponseWriter, r *http.Request) *appError {
@@ -123,5 +125,81 @@ func getTournamentResult(c web.C, w http.ResponseWriter, r *http.Request) *appEr
 
 	encoder := json.NewEncoder(w)
 	encoder.Encode(tournament.Result)
+	return nil
+}
+
+func listAllSeasons(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	tournaments, err := tournaments.AllTournaments()
+	if err != nil {
+		return &appError{err, "Cant load tournaments", 404}
+	}
+
+	seasons := make(map[int]bool)
+
+	for _, t := range tournaments {
+		seasons[t.Info.Season] = true
+	}
+
+	var seasonList []int
+	for year, _ := range seasons {
+		seasonList = append(seasonList, year)
+	}
+
+	sort.Ints(seasonList)
+	encoder := json.NewEncoder(w)
+	encoder.Encode(map[string][]int{"seasons": seasonList})
+	return nil
+}
+
+func listTournamentsBySeason(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	season, err := strconv.Atoi(c.URLParams["year"])
+	tList, err := tournaments.TournamentsBySeason(season)
+	if err != nil {
+		return &appError{err, "Cant find tournaments", 404}
+	}
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(map[string][]*tournaments.Tournament{"tournaments": tList})
+	return nil
+}
+
+func getSeasonStandings(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	season, err := strconv.Atoi(c.URLParams["year"])
+	tList, err := tournaments.TournamentsBySeason(season)
+	if err != nil {
+		return &appError{err, "Cant find tournaments", 404}
+	}
+
+	type SortedStandings struct {
+		ByWinnings tournaments.PlayerStandings `json:"byWinnings"`
+		ByAvgPlace tournaments.PlayerStandings `json:"byAvgPlace"`
+		ByPoints   tournaments.PlayerStandings `json:"byPoints"`
+		ByHeadsUp  tournaments.PlayerStandings `json:"byHeadsUp"`
+	}
+
+	// Compute standings
+	sortedStandings := new(SortedStandings)
+
+	standings := tournaments.NewStandings(tList)
+	standings.ByWinnings()
+	sortedStandings.ByWinnings = standings
+
+	standings = tournaments.NewStandings(tList)
+	standings.ByAvgPlace()
+	sortedStandings.ByAvgPlace = standings
+
+	standings = tournaments.NewStandings(tList)
+	standings.ByPoints()
+	sortedStandings.ByPoints = standings
+
+	standings = tournaments.NewStandings(tList)
+	standings.ByHeadsUp()
+	sortedStandings.ByHeadsUp = standings
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(sortedStandings)
 	return nil
 }
