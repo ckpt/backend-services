@@ -57,6 +57,28 @@ func (s ByWinnings) Less(i, j int) bool {
 	return false
 }
 
+// Implements old tie break used in earlier seasons
+type ByWinningsOld struct{ PlayerStandings }
+
+func (s ByWinningsOld) Less(i, j int) bool {
+	if s.PlayerStandings[i].Winnings < s.PlayerStandings[j].Winnings {
+		return true
+	}
+
+	if s.PlayerStandings[i].Winnings == s.PlayerStandings[j].Winnings {
+		if s.PlayerStandings[i].AvgPlace < s.PlayerStandings[j].AvgPlace {
+			return true
+		}
+
+		if s.PlayerStandings[i].Points == s.PlayerStandings[j].Points {
+			if s.PlayerStandings[i].NumWins < s.PlayerStandings[j].NumWins {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 type ByAvgPlace struct{ PlayerStandings }
 
 func (s ByAvgPlace) Less(i, j int) bool {
@@ -155,17 +177,24 @@ func getActivePlayers(tournaments Tournaments) ([]uuid.UUID, int) {
 func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 	var periods []YellowPeriod
 	var currentPeriod *YellowPeriod
+	var season, seasonIndex int
 
 	sort.Sort(tournaments)
 	for i := range tournaments {
 		if !tournaments[i].Played {
 			continue
 		}
-		standings := NewStandings(tournaments[:i+1])
-		standings.ByWinnings()
+		// Leader is based on results for the season, so start from "scratch" on new seasons
+		if tournaments[i].Info.Season != season {
+			season = tournaments[i].Info.Season
+			seasonIndex = i
+		}
+		standings := NewStandings(tournaments[seasonIndex:i+1])
+		standings.ByWinnings(season < 2013)
 		if currentPeriod == nil {
 			currentPeriod = &YellowPeriod{
 				From:   tournaments[i].Info.Scheduled,
+				To:   tournaments[i].Info.Scheduled,
 				Player: standings[0].Player,
 				Active: true,
 			}
@@ -173,9 +202,11 @@ func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 			currentPeriod.To = tournaments[i].Info.Scheduled
 		} else {
 			currentPeriod.Active = false
+			currentPeriod.To = tournaments[i].Info.Scheduled
 			periods = append(periods, *currentPeriod)
 			currentPeriod = &YellowPeriod{
 				From:   tournaments[i].Info.Scheduled,
+				To:   tournaments[i].Info.Scheduled,
 				Player: standings[0].Player,
 				Active: true,
 			}
@@ -289,8 +320,12 @@ func NewStandings(tournaments Tournaments) PlayerStandings {
 // Various ways to sort the player standings using helper structs that
 // implement different comparison methods.
 
-func (s PlayerStandings) ByWinnings() {
-	sort.Sort(sort.Reverse(ByWinnings{s}))
+func (s PlayerStandings) ByWinnings(oldTieBreak bool) {
+	if oldTieBreak {
+		sort.Sort(sort.Reverse(ByWinningsOld{s}))
+	} else {
+		sort.Sort(sort.Reverse(ByWinnings{s}))
+	}
 }
 
 func (s PlayerStandings) ByAvgPlace() {

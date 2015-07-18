@@ -184,7 +184,7 @@ func getSeasonStandings(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 	sortedStandings := new(SortedStandings)
 
 	standings := tournaments.NewStandings(tList)
-	standings.ByWinnings()
+	standings.ByWinnings(season < 2013)
 	sortedStandings.ByWinnings = standings
 
 	standings = tournaments.NewStandings(tList)
@@ -213,7 +213,28 @@ func getSeasonStats(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	}
 
 	type SeasonStats struct {
-		YellowPeriods []tournaments.YellowPeriod
+		YellowPeriods []tournaments.YellowPeriod `json:"yellowPeriods"`
+		//PeriodStats []PeriodStats
+	}
+
+	seasonStats := new(SeasonStats)
+	yellows := tournaments.YellowPeriods(tList)
+	seasonStats.YellowPeriods = yellows
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(seasonStats)
+	return nil
+}
+
+func getAllSeasonsStats(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	tList, err := tournaments.AllTournaments()
+	if err != nil {
+		return &appError{err, "Cant find tournaments", 404}
+	}
+
+	type SeasonStats struct {
+		YellowPeriods []tournaments.YellowPeriod `json:"yellowPeriods"`
 		//PeriodStats []PeriodStats
 	}
 
