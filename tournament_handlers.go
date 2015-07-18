@@ -203,3 +203,25 @@ func getSeasonStandings(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 	encoder.Encode(sortedStandings)
 	return nil
 }
+
+func getSeasonStats(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	season, err := strconv.Atoi(c.URLParams["year"])
+	tList, err := tournaments.TournamentsBySeason(season)
+	if err != nil {
+		return &appError{err, "Cant find tournaments", 404}
+	}
+
+	type SeasonStats struct {
+		YellowPeriods []tournaments.YellowPeriod
+		//PeriodStats []PeriodStats
+	}
+
+	seasonStats := new(SeasonStats)
+	yellows := tournaments.YellowPeriods(tList)
+	seasonStats.YellowPeriods = yellows
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(seasonStats)
+	return nil
+}

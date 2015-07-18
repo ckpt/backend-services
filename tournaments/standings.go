@@ -3,17 +3,32 @@ package tournaments
 import (
 	"github.com/m4rw3r/uuid"
 	"sort"
+	"time"
 )
 
+type YellowPeriod struct {
+	From   time.Time `json:"from"`
+	To     time.Time `json:"to"`
+	Player uuid.UUID `json:"uuid"`
+	Active bool      `json:"active"`
+}
+
+type PlayerResult struct {
+	Place int       `json:"place"`
+	When  time.Time `json:"when"`
+}
+
 type PlayerStanding struct {
-	Player     uuid.UUID `json:"uuid"`
-	Winnings   int       `json:"winnings"`
-	AvgPlace   float64   `json:"avgPlace"`
-	Points     int       `json:"points"`
-	NumHeadsUp int       `json:"headsUp"`
-	NumWins    int       `json:"wins"`
-	NumPlayed  int       `json:"played"`
-	Enough     bool      `json:"playedEnough"`
+	Player     uuid.UUID      `json:"uuid"`
+	Results    []PlayerResult `json:"results"`
+	Winnings   int            `json:"winnings"`
+	AvgPlace   float64        `json:"avgPlace"`
+	Points     int            `json:"points"`
+	NumHeadsUp int            `json:"headsUp"`
+	NumWins    int            `json:"wins"`
+	NumPlayed  int            `json:"played"`
+	Enough     bool           `json:"playedEnough"`
+	NumTotal   int            `json:"numTotal"`
 }
 
 type PlayerStandings []*PlayerStanding
@@ -111,7 +126,7 @@ func (s ByHeadsUp) Less(i, j int) bool {
 	return false
 }
 
-func getActivePlayers(tournaments []*Tournament) ([]uuid.UUID, int) {
+func getActivePlayers(tournaments Tournaments) ([]uuid.UUID, int) {
 	var activePlayers []uuid.UUID
 
 	maxPlayers := 0
@@ -137,7 +152,40 @@ func getActivePlayers(tournaments []*Tournament) ([]uuid.UUID, int) {
 	return activePlayers, maxPlayers
 }
 
-func NewStandings(tournaments []*Tournament) PlayerStandings {
+func YellowPeriods(tournaments Tournaments) []YellowPeriod {
+	var periods []YellowPeriod
+	var currentPeriod *YellowPeriod
+
+	sort.Sort(tournaments)
+	for i := range tournaments {
+		if !tournaments[i].Played {
+			continue
+		}
+		standings := NewStandings(tournaments[:i+1])
+		standings.ByWinnings()
+		if currentPeriod == nil {
+			currentPeriod = &YellowPeriod{
+				From:   tournaments[i].Info.Scheduled,
+				Player: standings[0].Player,
+				Active: true,
+			}
+		} else if currentPeriod.Player == standings[0].Player {
+			currentPeriod.To = tournaments[i].Info.Scheduled
+		} else {
+			currentPeriod.Active = false
+			periods = append(periods, *currentPeriod)
+			currentPeriod = &YellowPeriod{
+				From:   tournaments[i].Info.Scheduled,
+				Player: standings[0].Player,
+				Active: true,
+			}
+		}
+	}
+	periods = append(periods, *currentPeriod)
+	return periods
+}
+
+func NewStandings(tournaments Tournaments) PlayerStandings {
 
 	// First, find all active players for these tournaments
 	// Also, get the max number of players for a given tournament
@@ -151,6 +199,7 @@ func NewStandings(tournaments []*Tournament) PlayerStandings {
 	numHeadsUp := make(map[uuid.UUID]int)
 	numWins := make(map[uuid.UUID]int)
 	numPlayed := make(map[uuid.UUID]int)
+	results := make(map[uuid.UUID][]PlayerResult)
 
 	for _, t := range tournaments {
 		if !t.Played || len(t.Result) == 0 {
@@ -160,6 +209,11 @@ func NewStandings(tournaments []*Tournament) PlayerStandings {
 		seenPlayer := make(map[uuid.UUID]bool)
 		for i, player := range t.Result {
 			place := i + 1
+			results[player] = append(results[player], PlayerResult{
+				Place: place,
+				When:  t.Info.Scheduled,
+			})
+
 			sumPlace[player] += place
 			numPlayed[player] += 1
 			seenPlayer[player] = true
@@ -217,6 +271,7 @@ func NewStandings(tournaments []*Tournament) PlayerStandings {
 
 		standings = append(standings, &PlayerStanding{
 			Player:     player,
+			Results:    results[player],
 			Winnings:   winnings[player],
 			AvgPlace:   float64(sumPlace[player]) / float64(numPlayed[player]),
 			Points:     sumPoints,
@@ -224,6 +279,7 @@ func NewStandings(tournaments []*Tournament) PlayerStandings {
 			NumWins:    numWins[player],
 			NumPlayed:  numPlayed[player],
 			Enough:     enough,
+			NumTotal:   len(tournaments),
 		})
 	}
 

@@ -55,8 +55,8 @@ func (rts *RedisTournamentStorage) Delete(uuid uuid.UUID) error {
 	return errors.New("Not implemented yet")
 }
 
-func (rts *RedisTournamentStorage) LoadAll() ([]*Tournament, error) {
-	var tournaments []*Tournament
+func (rts *RedisTournamentStorage) LoadAll() (Tournaments, error) {
+	var tournaments Tournaments
 	conn := rts.pool.Get()
 	defer conn.Close()
 	b, err := redigo.Strings(conn.Do("SMEMBERS", "tournaments"))
@@ -74,8 +74,8 @@ func (rts *RedisTournamentStorage) LoadAll() ([]*Tournament, error) {
 	return tournaments, nil
 }
 
-func (rts *RedisTournamentStorage) LoadBySeason(season int) ([]*Tournament, error) {
-	var tournaments []*Tournament
+func (rts *RedisTournamentStorage) LoadBySeason(season int) (Tournaments, error) {
+	var tournaments Tournaments
 	conn := rts.pool.Get()
 	defer conn.Close()
 	b, err := redigo.Strings(conn.Do("SMEMBERS", fmt.Sprintf("season:%d:tournaments", season)))

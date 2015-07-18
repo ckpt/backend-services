@@ -39,13 +39,19 @@ type Tournament struct {
 	Bets    []Bet      `json:"bets"`
 }
 
+type Tournaments []*Tournament
+
+func (t Tournaments) Len() int           { return len(t) }
+func (t Tournaments) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t Tournaments) Less(i, j int) bool { return t[i].Info.Scheduled.Before(t[j].Info.Scheduled) }
+
 // A storage interface for Tournaments
 type TournamentStorage interface {
 	Store(*Tournament) error
 	Delete(uuid.UUID) error
 	Load(uuid.UUID) (*Tournament, error)
-	LoadAll() ([]*Tournament, error)
-	LoadBySeason(int) ([]*Tournament, error)
+	LoadAll() (Tournaments, error)
+	LoadBySeason(int) (Tournaments, error)
 }
 
 //
@@ -91,7 +97,7 @@ func NewTournament(tdata Info) (*Tournament, error) {
 	return t, nil
 }
 
-func AllTournaments() ([]*Tournament, error) {
+func AllTournaments() (Tournaments, error) {
 	return storage.LoadAll()
 }
 
@@ -107,7 +113,7 @@ func TournamentByUUID(uuid uuid.UUID) (*Tournament, error) {
 	return storage.Load(uuid)
 }
 
-func TournamentsBySeason(season int) ([]*Tournament, error) {
+func TournamentsBySeason(season int) (Tournaments, error) {
 	return storage.LoadBySeason(season)
 }
 
