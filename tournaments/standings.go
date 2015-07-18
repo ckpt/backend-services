@@ -189,12 +189,12 @@ func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 			season = tournaments[i].Info.Season
 			seasonIndex = i
 		}
-		standings := NewStandings(tournaments[seasonIndex:i+1])
+		standings := NewStandings(tournaments[seasonIndex : i+1])
 		standings.ByWinnings(season < 2013)
 		if currentPeriod == nil {
 			currentPeriod = &YellowPeriod{
 				From:   tournaments[i].Info.Scheduled,
-				To:   tournaments[i].Info.Scheduled,
+				To:     tournaments[i].Info.Scheduled,
 				Player: standings[0].Player,
 				Active: true,
 			}
@@ -206,7 +206,7 @@ func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 			periods = append(periods, *currentPeriod)
 			currentPeriod = &YellowPeriod{
 				From:   tournaments[i].Info.Scheduled,
-				To:   tournaments[i].Info.Scheduled,
+				To:     tournaments[i].Info.Scheduled,
 				Player: standings[0].Player,
 				Active: true,
 			}
