@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"time"
 )
 
 func createNewTournament(c web.C, w http.ResponseWriter, r *http.Request) *appError {
@@ -197,50 +196,9 @@ func getSeasonStandings(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 
 func getSeasonStats(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	season, err := strconv.Atoi(c.URLParams["year"])
-	tList, err := tournaments.TournamentsBySeason(season)
-	if err != nil {
-		return &appError{err, "Cant find tournaments", 404}
-	}
+	season, _ := strconv.Atoi(c.URLParams["year"])
 
-	// These things should move to tournaments package...
-	type MonthStats struct {
-		Year int
-		Month time.Month
-		Best uuid.UUID
-		Worst uuid.UUID
-	}
-
-	type SeasonStats struct {
-		YellowPeriods []tournaments.YellowPeriod `json:"yellowPeriods"`
-		MonthStats []*MonthStats `json:"monthStats"`
-	}
-
-	seasonStats := new(SeasonStats)
-	yellows := tournaments.YellowPeriods(tList)
-	seasonStats.YellowPeriods = yellows
-
-
-	byMonth := tList.GroupByMonths(season)
-
-	for k,v := range byMonth {
-		periodStats := new(MonthStats)
-
-		played := v.Played()
-
-		if len(played) == 0 {
-			continue
-		}
-
-		sort.Sort(v)
-		periodStats.Year = season
-		periodStats.Month = k
-
-		periodStats.Best = tournaments.BestPlayer(v)
-		periodStats.Worst = tournaments.WorstPlayer(v)
-
-		seasonStats.MonthStats = append(seasonStats.MonthStats, periodStats)
-	}
+	seasonStats := tournaments.SeasonStats([]int{season})
 
 	encoder := json.NewEncoder(w)
 	encoder.Encode(seasonStats)
@@ -254,48 +212,11 @@ func getAllSeasonsStats(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 		return &appError{err, "Cant find tournaments", 404}
 	}
 
-	// These things should move to tournaments package...
-	type MonthStats struct {
-		Year int
-		Month time.Month
-		Best uuid.UUID
-		Worst uuid.UUID
-	}
+	seasons := tList.Seasons()
 
-	type SeasonStats struct {
-		YellowPeriods []tournaments.YellowPeriod `json:"yellowPeriods"`
-		MonthStats []*MonthStats `json:"monthStats"`
-	}
-
-	seasonStats := new(SeasonStats)
-	yellows := tournaments.YellowPeriods(tList)
-	seasonStats.YellowPeriods = yellows
-
-	for _,season := range tList.Seasons() {
-
-		byMonth := tList.GroupByMonths(season)
-
-		for k,v := range byMonth {
-			periodStats := new(MonthStats)
-
-			played := v.Played()
-
-			if len(played) == 0 {
-				continue
-			}
-
-			sort.Sort(v)
-			periodStats.Year = season
-			periodStats.Month = k
-
-			periodStats.Best = tournaments.BestPlayer(v)
-			periodStats.Worst = tournaments.WorstPlayer(v)
-
-			seasonStats.MonthStats = append(seasonStats.MonthStats, periodStats)
-		}
-	}
+	fullStats := tournaments.SeasonStats(seasons)
 
 	encoder := json.NewEncoder(w)
-	encoder.Encode(seasonStats)
+	encoder.Encode(fullStats)
 	return nil
 }

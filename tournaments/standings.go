@@ -411,3 +411,59 @@ func (s PlayerStandings) ByPoints() {
 func (s PlayerStandings) ByHeadsUp() {
 	sort.Sort(sort.Reverse(ByHeadsUp{s}))
 }
+
+
+type MonthStats struct {
+	Year int `json:"year"`
+	Month time.Month `json:"month"`
+	Best uuid.UUID `json:"best"`
+	Worst uuid.UUID `json:"worst"`
+}
+
+type PeriodStats struct {
+	YellowPeriods []YellowPeriod `json:"yellowPeriods"`
+	MonthStats []*MonthStats `json:"monthStats"`
+}
+
+func SeasonStats(seasons []int) *PeriodStats {
+	stats := new(PeriodStats)
+	all, err := AllTournaments()
+	if err != nil {
+		// TODO
+	}
+
+	var t Tournaments
+	for _,event := range all {
+		for _,s := range seasons {
+			if event.Info.Season == s {
+				t = append(t, event)
+			}
+		}
+	}
+
+	yellows := YellowPeriods(t)
+	stats.YellowPeriods = yellows
+
+	for _, season := range seasons {
+		byMonth := t.GroupByMonths(season)
+		for k,v := range byMonth {
+			monthStats := new(MonthStats)
+
+			played := v.Played()
+
+			if len(played) == 0 {
+				continue
+			}
+
+			sort.Sort(v)
+			monthStats.Year = season
+			monthStats.Month = k
+
+			monthStats.Best = BestPlayer(v)
+			monthStats.Worst = WorstPlayer(v)
+
+			stats.MonthStats = append(stats.MonthStats, monthStats)
+		}
+	}
+	return stats
+}
