@@ -205,6 +205,17 @@ func getSeasonStats(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	return nil
 }
 
+func getSeasonTitles(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	season, _ := strconv.Atoi(c.URLParams["year"])
+
+	seasonTitles := tournaments.Titles([]int{season})
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(seasonTitles)
+	return nil
+}
+
 func getAllSeasonsStats(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	tList, err := tournaments.AllTournaments()

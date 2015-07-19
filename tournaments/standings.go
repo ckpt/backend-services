@@ -6,13 +6,6 @@ import (
 	"time"
 )
 
-type YellowPeriod struct {
-	From   time.Time `json:"from"`
-	To     time.Time `json:"to"`
-	Player uuid.UUID `json:"uuid"`
-	Active bool      `json:"active"`
-}
-
 type PlayerResult struct {
 	Place int       `json:"place"`
 	When  time.Time `json:"when"`
@@ -72,7 +65,7 @@ func (s ByWinningsOld) Less(i, j int) bool {
 	}
 
 	if s.PlayerStandings[i].Winnings == s.PlayerStandings[j].Winnings {
-		if s.PlayerStandings[i].AvgPlace < s.PlayerStandings[j].AvgPlace {
+		if s.PlayerStandings[i].AvgPlace > s.PlayerStandings[j].AvgPlace {
 			return true
 		}
 
@@ -178,113 +171,6 @@ func getActivePlayers(tournaments Tournaments) ([]uuid.UUID, int) {
 	}
 
 	return activePlayers, maxPlayers
-}
-
-func BestPlayer(tournaments Tournaments) uuid.UUID {
-	standings := NewStandings(tournaments)
-	standings.ByAvgPlace()
-
-	// TODO: More than 2 ppl could share best AvgPlace
-	if standings[0].AvgPlace == standings[1].AvgPlace {
-		sort.Sort(standings[0].Results)
-		sort.Sort(standings[1].Results)
-
-		placesA := standings[0].Results
-		placesB := standings[1].Results
-
-		for i := 0; i < standings[0].NumTotal; i++ {
-			if len(placesA) >= i+1 && len(placesB) >= i+1 {
-				if placesA[i].Place < placesB[i].Place {
-					return standings[0].Player
-				}
-				if placesB[i].Place < placesA[i].Place {
-					return standings[1].Player
-				}
-			} else {
-				if len(placesA) < len(placesB) {
-					return standings[0].Player
-				} else {
-					return standings[1].Player
-				}
-			}
-		}
-	}
-	return standings[0].Player
-}
-
-func WorstPlayer(tournaments Tournaments) uuid.UUID {
-	standings := NewStandings(tournaments)
-	standings.ByAvgPlace()
-
-	m, n := len(standings)-1, len(standings)-2
-	// TODO: More than 2 ppl could share worst AvgPlace
-	if standings[m].AvgPlace == standings[n].AvgPlace {
-		sort.Sort(sort.Reverse(standings[m].Results))
-		sort.Sort(sort.Reverse(standings[n].Results))
-
-		placesA := standings[m].Results
-		placesB := standings[n].Results
-
-		for i := 0; i < standings[m].NumTotal; i++ {
-			if len(placesA) >= i+1 && len(placesB) >= i+1 {
-				if placesA[i].Place > placesB[i].Place {
-					return standings[m].Player
-				}
-				if placesB[i].Place > placesA[i].Place {
-					return standings[n].Player
-				}
-			} else {
-				if len(placesA) < len(placesB) {
-					return standings[m].Player
-				} else {
-					return standings[n].Player
-				}
-			}
-		}
-	}
-	return standings[m].Player
-}
-
-func YellowPeriods(tournaments Tournaments) []YellowPeriod {
-	var periods []YellowPeriod
-	var currentPeriod *YellowPeriod
-	var season, seasonIndex int
-
-	sort.Sort(tournaments)
-	for i := range tournaments {
-		if !tournaments[i].Played {
-			continue
-		}
-		// Leader is based on results for the season, so start from "scratch" on new seasons
-		if tournaments[i].Info.Season != season {
-			season = tournaments[i].Info.Season
-			seasonIndex = i
-		}
-		standings := NewStandings(tournaments[seasonIndex : i+1])
-		standings.ByWinnings(season < 2013)
-		if currentPeriod == nil {
-			currentPeriod = &YellowPeriod{
-				From:   tournaments[i].Info.Scheduled,
-				To:     tournaments[i].Info.Scheduled,
-				Player: standings[0].Player,
-				Active: true,
-			}
-		} else if currentPeriod.Player == standings[0].Player {
-			currentPeriod.To = tournaments[i].Info.Scheduled
-		} else {
-			currentPeriod.Active = false
-			currentPeriod.To = tournaments[i].Info.Scheduled
-			periods = append(periods, *currentPeriod)
-			currentPeriod = &YellowPeriod{
-				From:   tournaments[i].Info.Scheduled,
-				To:     tournaments[i].Info.Scheduled,
-				Player: standings[0].Player,
-				Active: true,
-			}
-		}
-	}
-	periods = append(periods, *currentPeriod)
-	return periods
 }
 
 // TODO: Split into smaller functions
@@ -410,59 +296,4 @@ func (s PlayerStandings) ByPoints() {
 
 func (s PlayerStandings) ByHeadsUp() {
 	sort.Sort(sort.Reverse(ByHeadsUp{s}))
-}
-
-type MonthStats struct {
-	Year  int        `json:"year"`
-	Month time.Month `json:"month"`
-	Best  uuid.UUID  `json:"best"`
-	Worst uuid.UUID  `json:"worst"`
-}
-
-type PeriodStats struct {
-	YellowPeriods []YellowPeriod `json:"yellowPeriods"`
-	MonthStats    []*MonthStats  `json:"monthStats"`
-}
-
-func SeasonStats(seasons []int) *PeriodStats {
-	stats := new(PeriodStats)
-	all, err := AllTournaments()
-	if err != nil {
-		// TODO
-	}
-
-	var t Tournaments
-	for _, event := range all {
-		for _, s := range seasons {
-			if event.Info.Season == s {
-				t = append(t, event)
-			}
-		}
-	}
-
-	yellows := YellowPeriods(t)
-	stats.YellowPeriods = yellows
-
-	for _, season := range seasons {
-		byMonth := t.GroupByMonths(season)
-		for k, v := range byMonth {
-			monthStats := new(MonthStats)
-
-			played := v.Played()
-
-			if len(played) == 0 {
-				continue
-			}
-
-			sort.Sort(v)
-			monthStats.Year = season
-			monthStats.Month = k
-
-			monthStats.Best = BestPlayer(v)
-			monthStats.Worst = WorstPlayer(v)
-
-			stats.MonthStats = append(stats.MonthStats, monthStats)
-		}
-	}
-	return stats
 }
