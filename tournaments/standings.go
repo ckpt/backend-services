@@ -18,9 +18,15 @@ type PlayerResult struct {
 	When  time.Time `json:"when"`
 }
 
+type PlayerResults []PlayerResult
+
+func (s PlayerResults) Len() int      { return len(s) }
+func (s PlayerResults) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s PlayerResults) Less(i,j int) bool { return s[i].Place > s[j].Place }
+
 type PlayerStanding struct {
 	Player     uuid.UUID      `json:"uuid"`
-	Results    []PlayerResult `json:"results"`
+	Results    PlayerResults `json:"results"`
 	Winnings   int            `json:"winnings"`
 	AvgPlace   float64        `json:"avgPlace"`
 	Points     int            `json:"points"`
@@ -174,6 +180,71 @@ func getActivePlayers(tournaments Tournaments) ([]uuid.UUID, int) {
 	return activePlayers, maxPlayers
 }
 
+func BestPlayer(tournaments Tournaments) uuid.UUID {
+	standings := NewStandings(tournaments)
+	standings.ByAvgPlace()
+
+	// TODO: More than 2 ppl could share best AvgPlace
+	if standings[0].AvgPlace == standings[1].AvgPlace {
+		sort.Sort(standings[0].Results)
+		sort.Sort(standings[1].Results)
+
+		placesA := standings[0].Results
+		placesB := standings[1].Results
+
+		for i := 0; i < standings[0].NumTotal; i++ {
+			if len(placesA) >= i+1 && len(placesB) >= i+1 {
+				if placesA[i].Place < placesB[i].Place {
+					return standings[0].Player
+				}
+				if placesB[i].Place < placesA[i].Place {
+					return standings[1].Player
+				}
+			} else {
+				if len(placesA) < len(placesB) {
+					return standings[0].Player
+				} else {
+					return standings[1].Player
+				}
+			}
+		}
+	}
+	return standings[0].Player
+}
+
+func WorstPlayer(tournaments Tournaments) uuid.UUID {
+	standings := NewStandings(tournaments)
+	standings.ByAvgPlace()
+
+	m, n := len(standings) - 1, len(standings) - 2
+	// TODO: More than 2 ppl could share worst AvgPlace
+	if standings[m].AvgPlace == standings[n].AvgPlace {
+		sort.Sort(sort.Reverse(standings[m].Results))
+		sort.Sort(sort.Reverse(standings[n].Results))
+
+		placesA := standings[m].Results
+		placesB := standings[n].Results
+
+		for i := 0; i < standings[m].NumTotal; i++ {
+			if len(placesA) >= i+1 && len(placesB) >= i+1 {
+				if placesA[i].Place > placesB[i].Place {
+					return standings[m].Player
+				}
+				if placesB[i].Place > placesA[i].Place {
+					return standings[n].Player
+				}
+			} else {
+				if len(placesA) < len(placesB) {
+					return standings[m].Player
+				} else {
+					return standings[n].Player
+				}
+			}
+		}
+	}
+	return standings[m].Player
+}
+
 func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 	var periods []YellowPeriod
 	var currentPeriod *YellowPeriod
@@ -216,10 +287,11 @@ func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 	return periods
 }
 
+// TODO: Split into smaller functions
 func NewStandings(tournaments Tournaments) PlayerStandings {
 
 	// First, find all active players for these tournaments
-	// Also, get the max number of players for a given tournament
+	// Also, get the max number of players for a given set of tournaments
 	// This gives us the basis for low point scoring
 	activePlayers, maxPlayers := getActivePlayers(tournaments)
 

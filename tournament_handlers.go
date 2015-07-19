@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 )
 
 func createNewTournament(c web.C, w http.ResponseWriter, r *http.Request) *appError {
@@ -130,22 +131,12 @@ func getTournamentResult(c web.C, w http.ResponseWriter, r *http.Request) *appEr
 
 func listAllSeasons(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	tournaments, err := tournaments.AllTournaments()
+	allTournaments, err := tournaments.AllTournaments()
 	if err != nil {
 		return &appError{err, "Cant load tournaments", 404}
 	}
 
-	seasons := make(map[int]bool)
-
-	for _, t := range tournaments {
-		seasons[t.Info.Season] = true
-	}
-
-	var seasonList []int
-	for year, _ := range seasons {
-		seasonList = append(seasonList, year)
-	}
-
+	seasonList := allTournaments.Seasons()
 	sort.Ints(seasonList)
 	encoder := json.NewEncoder(w)
 	encoder.Encode(map[string][]int{"seasons": seasonList})
@@ -212,14 +203,44 @@ func getSeasonStats(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 		return &appError{err, "Cant find tournaments", 404}
 	}
 
+	// These things should move to tournaments package...
+	type MonthStats struct {
+		Year int
+		Month time.Month
+		Best uuid.UUID
+		Worst uuid.UUID
+	}
+
 	type SeasonStats struct {
 		YellowPeriods []tournaments.YellowPeriod `json:"yellowPeriods"`
-		//PeriodStats []PeriodStats
+		MonthStats []*MonthStats `json:"monthStats"`
 	}
 
 	seasonStats := new(SeasonStats)
 	yellows := tournaments.YellowPeriods(tList)
 	seasonStats.YellowPeriods = yellows
+
+
+	byMonth := tList.GroupByMonths(season)
+
+	for k,v := range byMonth {
+		periodStats := new(MonthStats)
+
+		played := v.Played()
+
+		if len(played) == 0 {
+			continue
+		}
+
+		sort.Sort(v)
+		periodStats.Year = season
+		periodStats.Month = k
+
+		periodStats.Best = tournaments.BestPlayer(v)
+		periodStats.Worst = tournaments.WorstPlayer(v)
+
+		seasonStats.MonthStats = append(seasonStats.MonthStats, periodStats)
+	}
 
 	encoder := json.NewEncoder(w)
 	encoder.Encode(seasonStats)
@@ -233,14 +254,46 @@ func getAllSeasonsStats(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 		return &appError{err, "Cant find tournaments", 404}
 	}
 
+	// These things should move to tournaments package...
+	type MonthStats struct {
+		Year int
+		Month time.Month
+		Best uuid.UUID
+		Worst uuid.UUID
+	}
+
 	type SeasonStats struct {
 		YellowPeriods []tournaments.YellowPeriod `json:"yellowPeriods"`
-		//PeriodStats []PeriodStats
+		MonthStats []*MonthStats `json:"monthStats"`
 	}
 
 	seasonStats := new(SeasonStats)
 	yellows := tournaments.YellowPeriods(tList)
 	seasonStats.YellowPeriods = yellows
+
+	for _,season := range tList.Seasons() {
+
+		byMonth := tList.GroupByMonths(season)
+
+		for k,v := range byMonth {
+			periodStats := new(MonthStats)
+
+			played := v.Played()
+
+			if len(played) == 0 {
+				continue
+			}
+
+			sort.Sort(v)
+			periodStats.Year = season
+			periodStats.Month = k
+
+			periodStats.Best = tournaments.BestPlayer(v)
+			periodStats.Worst = tournaments.WorstPlayer(v)
+
+			seasonStats.MonthStats = append(seasonStats.MonthStats, periodStats)
+		}
+	}
 
 	encoder := json.NewEncoder(w)
 	encoder.Encode(seasonStats)
