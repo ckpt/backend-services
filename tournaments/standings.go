@@ -20,21 +20,21 @@ type PlayerResult struct {
 
 type PlayerResults []PlayerResult
 
-func (s PlayerResults) Len() int      { return len(s) }
-func (s PlayerResults) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s PlayerResults) Less(i,j int) bool { return s[i].Place > s[j].Place }
+func (s PlayerResults) Len() int           { return len(s) }
+func (s PlayerResults) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s PlayerResults) Less(i, j int) bool { return s[i].Place > s[j].Place }
 
 type PlayerStanding struct {
-	Player     uuid.UUID      `json:"uuid"`
+	Player     uuid.UUID     `json:"uuid"`
 	Results    PlayerResults `json:"results"`
-	Winnings   int            `json:"winnings"`
-	AvgPlace   float64        `json:"avgPlace"`
-	Points     int            `json:"points"`
-	NumHeadsUp int            `json:"headsUp"`
-	NumWins    int            `json:"wins"`
-	NumPlayed  int            `json:"played"`
-	Enough     bool           `json:"playedEnough"`
-	NumTotal   int            `json:"numTotal"`
+	Winnings   int           `json:"winnings"`
+	AvgPlace   float64       `json:"avgPlace"`
+	Points     int           `json:"points"`
+	NumHeadsUp int           `json:"headsUp"`
+	NumWins    int           `json:"wins"`
+	NumPlayed  int           `json:"played"`
+	Enough     bool          `json:"playedEnough"`
+	NumTotal   int           `json:"numTotal"`
 }
 
 type PlayerStandings []*PlayerStanding
@@ -216,7 +216,7 @@ func WorstPlayer(tournaments Tournaments) uuid.UUID {
 	standings := NewStandings(tournaments)
 	standings.ByAvgPlace()
 
-	m, n := len(standings) - 1, len(standings) - 2
+	m, n := len(standings)-1, len(standings)-2
 	// TODO: More than 2 ppl could share worst AvgPlace
 	if standings[m].AvgPlace == standings[n].AvgPlace {
 		sort.Sort(sort.Reverse(standings[m].Results))
@@ -412,17 +412,16 @@ func (s PlayerStandings) ByHeadsUp() {
 	sort.Sort(sort.Reverse(ByHeadsUp{s}))
 }
 
-
 type MonthStats struct {
-	Year int `json:"year"`
+	Year  int        `json:"year"`
 	Month time.Month `json:"month"`
-	Best uuid.UUID `json:"best"`
-	Worst uuid.UUID `json:"worst"`
+	Best  uuid.UUID  `json:"best"`
+	Worst uuid.UUID  `json:"worst"`
 }
 
 type PeriodStats struct {
 	YellowPeriods []YellowPeriod `json:"yellowPeriods"`
-	MonthStats []*MonthStats `json:"monthStats"`
+	MonthStats    []*MonthStats  `json:"monthStats"`
 }
 
 func SeasonStats(seasons []int) *PeriodStats {
@@ -433,8 +432,8 @@ func SeasonStats(seasons []int) *PeriodStats {
 	}
 
 	var t Tournaments
-	for _,event := range all {
-		for _,s := range seasons {
+	for _, event := range all {
+		for _, s := range seasons {
 			if event.Info.Season == s {
 				t = append(t, event)
 			}
@@ -446,7 +445,7 @@ func SeasonStats(seasons []int) *PeriodStats {
 
 	for _, season := range seasons {
 		byMonth := t.GroupByMonths(season)
-		for k,v := range byMonth {
+		for k, v := range byMonth {
 			monthStats := new(MonthStats)
 
 			played := v.Played()

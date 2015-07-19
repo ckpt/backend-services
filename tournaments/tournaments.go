@@ -45,7 +45,6 @@ func (t Tournaments) Len() int           { return len(t) }
 func (t Tournaments) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 func (t Tournaments) Less(i, j int) bool { return t[i].Info.Scheduled.Before(t[j].Info.Scheduled) }
 
-
 // A storage interface for Tournaments
 type TournamentStorage interface {
 	Store(*Tournament) error
@@ -62,7 +61,7 @@ type TournamentStorage interface {
 func (t Tournaments) GroupByMonths(season int) map[time.Month]Tournaments {
 	byMonth := make(map[time.Month]Tournaments)
 
-	for _,entry := range(t) {
+	for _, entry := range t {
 		y, m := entry.Info.Scheduled.Year(), entry.Info.Scheduled.Month()
 		if y == season {
 			byMonth[m] = append(byMonth[m], entry)
@@ -72,10 +71,10 @@ func (t Tournaments) GroupByMonths(season int) map[time.Month]Tournaments {
 	return byMonth
 }
 
-func (t Tournaments) Seasons() []int  {
+func (t Tournaments) Seasons() []int {
 	seenSeasons := make(map[int]bool)
 
-	for _,entry := range(t) {
+	for _, entry := range t {
 		seenSeasons[entry.Info.Season] = true
 	}
 
@@ -89,7 +88,7 @@ func (t Tournaments) Seasons() []int  {
 func (t Tournaments) Played() Tournaments {
 	var played Tournaments
 
-	for _,entry := range(t) {
+	for _, entry := range t {
 		if entry.Played {
 			played = append(played, entry)
 		}
@@ -97,7 +96,6 @@ func (t Tournaments) Played() Tournaments {
 
 	return played
 }
-
 
 //
 // Tournament related functions and methods
