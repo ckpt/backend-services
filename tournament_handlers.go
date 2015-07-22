@@ -157,37 +157,8 @@ func listTournamentsBySeason(c web.C, w http.ResponseWriter, r *http.Request) *a
 
 func getSeasonStandings(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	season, err := strconv.Atoi(c.URLParams["year"])
-	tList, err := tournaments.TournamentsBySeason(season)
-	if err != nil {
-		return &appError{err, "Cant find tournaments", 404}
-	}
-
-	type SortedStandings struct {
-		ByWinnings tournaments.PlayerStandings `json:"byWinnings"`
-		ByAvgPlace tournaments.PlayerStandings `json:"byAvgPlace"`
-		ByPoints   tournaments.PlayerStandings `json:"byPoints"`
-		ByHeadsUp  tournaments.PlayerStandings `json:"byHeadsUp"`
-	}
-
-	// Compute standings
-	sortedStandings := new(SortedStandings)
-
-	standings := tournaments.NewStandings(tList)
-	standings.ByWinnings(season < 2013)
-	sortedStandings.ByWinnings = standings
-
-	standings = tournaments.NewStandings(tList)
-	standings.ByAvgPlace()
-	sortedStandings.ByAvgPlace = standings
-
-	standings = tournaments.NewStandings(tList)
-	standings.ByPoints()
-	sortedStandings.ByPoints = standings
-
-	standings = tournaments.NewStandings(tList)
-	standings.ByHeadsUp()
-	sortedStandings.ByHeadsUp = standings
+	season, _ := strconv.Atoi(c.URLParams["year"])
+	sortedStandings := tournaments.SeasonStandings(season)
 
 	encoder := json.NewEncoder(w)
 	encoder.Encode(sortedStandings)
@@ -216,7 +187,24 @@ func getSeasonTitles(c web.C, w http.ResponseWriter, r *http.Request) *appError 
 	return nil
 }
 
-func getAllSeasonsStats(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+func getTotalStandings(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	tList, err := tournaments.AllTournaments()
+	if err != nil {
+		return &appError{err, "Cant find tournaments", 404}
+	}
+
+	seasons := tList.Seasons()
+
+	totalStandings := tournaments.TotalStandings(seasons)
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(totalStandings)
+	return nil
+}
+
+func getTotalStats(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	tList, err := tournaments.AllTournaments()
 	if err != nil {
@@ -229,5 +217,21 @@ func getAllSeasonsStats(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 
 	encoder := json.NewEncoder(w)
 	encoder.Encode(fullStats)
+	return nil
+}
+
+func getTotalTitles(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	tList, err := tournaments.AllTournaments()
+	if err != nil {
+		return &appError{err, "Cant find tournaments", 404}
+	}
+
+	seasons := tList.Seasons()
+
+	allTitles := tournaments.Titles(seasons)
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(allTitles)
 	return nil
 }

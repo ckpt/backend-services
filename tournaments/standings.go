@@ -32,8 +32,62 @@ type PlayerStanding struct {
 
 type PlayerStandings []*PlayerStanding
 
+func (s PlayerStandings) Duplicate() PlayerStandings {
+	return s.Combine(PlayerStandings{})
+}
+
+func (existingPS PlayerStandings) Combine(newPS PlayerStandings) PlayerStandings {
+	var combined PlayerStandings
+	for _, nps := range newPS {
+		foundInOld := false
+		for _, ops := range existingPS {
+			if nps.Player == ops.Player {
+				foundInOld = true
+
+				cps := new(PlayerStanding)
+				cps.Player = ops.Player
+				cps.Results = append(ops.Results, nps.Results...)
+				cps.Winnings = ops.Winnings + nps.Winnings
+				cps.Points = ops.Points + nps.Points
+				cps.NumHeadsUp = ops.NumHeadsUp + nps.NumHeadsUp
+				cps.NumWins = ops.NumWins + nps.NumWins
+				cps.NumPlayed = ops.NumPlayed + nps.NumPlayed
+				cps.Enough = cps.NumPlayed > 8
+				cps.NumTotal = ops.NumTotal + nps.NumTotal
+				cps.AvgPlace = ((ops.AvgPlace * float64(ops.NumPlayed)) + (nps.AvgPlace * float64(nps.NumPlayed))) / float64(cps.NumPlayed)
+
+				combined = append(combined, cps)
+			}
+		}
+		if !foundInOld {
+			combined = append(combined, nps)
+		}
+	}
+
+	for _, ops := range existingPS {
+		foundInCombined := false
+		for _, cps := range combined {
+			if ops.Player == cps.Player {
+				foundInCombined = true
+			}
+		}
+		if !foundInCombined {
+			combined = append(combined, ops)
+		}
+	}
+
+	return combined
+}
+
 func (s PlayerStandings) Len() int      { return len(s) }
 func (s PlayerStandings) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+type SortedStandings struct {
+	ByWinnings PlayerStandings `json:"byWinnings"`
+	ByAvgPlace PlayerStandings `json:"byAvgPlace"`
+	ByPoints   PlayerStandings `json:"byPoints"`
+	ByHeadsUp  PlayerStandings `json:"byHeadsUp"`
+}
 
 type ByWinnings struct{ PlayerStandings }
 
@@ -273,6 +327,69 @@ func NewStandings(tournaments Tournaments) PlayerStandings {
 	}
 
 	return standings
+}
+
+func TotalStandings(seasons []int) *SortedStandings {
+
+	sortedStandings := new(SortedStandings)
+
+	var totalStandings PlayerStandings
+	for _, season := range seasons {
+		tList, err := TournamentsBySeason(season)
+		if err != nil {
+			// TODO
+		}
+		standings := NewStandings(tList)
+		totalStandings = totalStandings.Combine(standings)
+	}
+
+	// Got to use new rules to tie break here..
+	totalStandings.ByWinnings(false)
+	sortedStandings.ByWinnings = totalStandings
+
+	totalStandings = totalStandings.Duplicate()
+	totalStandings.ByAvgPlace()
+	sortedStandings.ByAvgPlace = totalStandings
+
+	totalStandings = totalStandings.Duplicate()
+	totalStandings.ByPoints()
+	sortedStandings.ByPoints = totalStandings
+
+	totalStandings = totalStandings.Duplicate()
+	totalStandings.ByHeadsUp()
+	sortedStandings.ByHeadsUp = totalStandings
+
+	return sortedStandings
+
+}
+
+func SeasonStandings(season int) *SortedStandings {
+
+	tList, err := TournamentsBySeason(season)
+	if err != nil {
+		// TODO
+	}
+
+	// Compute standings
+	sortedStandings := new(SortedStandings)
+
+	standings := NewStandings(tList)
+	standings.ByWinnings(season < 2013)
+	sortedStandings.ByWinnings = standings
+
+	standings = standings.Duplicate()
+	standings.ByAvgPlace()
+	sortedStandings.ByAvgPlace = standings
+
+	standings = standings.Duplicate()
+	standings.ByPoints()
+	sortedStandings.ByPoints = standings
+
+	standings = standings.Duplicate()
+	standings.ByHeadsUp()
+	sortedStandings.ByHeadsUp = standings
+
+	return sortedStandings
 }
 
 // Various ways to sort the player standings using helper structs that
