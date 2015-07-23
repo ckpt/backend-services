@@ -25,7 +25,7 @@ func TokenHandler(c *web.C, h http.Handler) http.Handler {
 		p, err := players.PlayerByUserToken(token)
 		if err != nil {
 			w.WriteHeader(403)
-			w.Write([]byte("Unauthorized"))
+			w.Write([]byte("Unauthorized - " + err.Error()))
 			return
 		}
 		c.Env["authPlayer"] = p.UUID

@@ -53,72 +53,25 @@ type SeasonTitles struct {
 	} `json:"loserOfTheYear"`
 }
 
-func BestPlayer(tournaments Tournaments) uuid.UUID {
+func BestPlayer(tournaments Tournaments) (uuid.UUID, bool) {
 	standings := NewStandings(tournaments)
-	standings.ByAvgPlace()
+	standings.ByBestPlayer()
 
-	// TODO: More than 2 ppl could share best AvgPlace
-	if standings[0].AvgPlace == standings[1].AvgPlace {
-		sort.Sort(standings[0].Results)
-		sort.Sort(standings[1].Results)
-
-		placesA := standings[0].Results
-		placesB := standings[1].Results
-
-		for i := 0; i < standings[0].NumTotal; i++ {
-			if len(placesA) >= i+1 && len(placesB) >= i+1 {
-				if placesA[i].Place < placesB[i].Place {
-					return standings[0].Player
-				}
-				if placesB[i].Place < placesA[i].Place {
-					return standings[1].Player
-				}
-			} else {
-				if len(placesA) < len(placesB) {
-					return standings[0].Player
-				} else {
-					return standings[1].Player
-				}
-			}
-		}
+	if standings[0].Results.Equals(standings[1].Results) {
+		// It's still a tie
+		return standings[0].Player, true
 	}
-	return standings[0].Player
+	return standings[0].Player, false
 }
 
-func WorstPlayer(tournaments Tournaments) uuid.UUID {
+func WorstPlayer(tournaments Tournaments) (uuid.UUID, bool) {
 	standings := NewStandings(tournaments)
-	standings.ByAvgPlace()
-
-	m, n := len(standings)-1, len(standings)-2
-	// TODO: More than 2 ppl could share worst AvgPlace
-	if standings[m].AvgPlace == standings[n].AvgPlace {
-		println("Found two players with same worst avg:")
-		println("Player ", standings[m].Player.String(), "with ", standings[m].AvgPlace)
-		println("Player ", standings[n].Player.String(), "with ", standings[n].AvgPlace)
-		sort.Sort(sort.Reverse(standings[m].Results))
-		sort.Sort(sort.Reverse(standings[n].Results))
-
-		placesA := standings[m].Results
-		placesB := standings[n].Results
-
-		for i := 0; i < standings[m].NumTotal; i++ {
-			if len(placesA) >= i+1 && len(placesB) >= i+1 {
-				if placesA[i].Place > placesB[i].Place {
-					return standings[m].Player
-				}
-				if placesB[i].Place > placesA[i].Place {
-					return standings[n].Player
-				}
-			} else {
-				if len(placesA) < len(placesB) {
-					return standings[m].Player
-				} else {
-					return standings[n].Player
-				}
-			}
-		}
+	standings.ByWorstPlayer()
+	if standings[0].Results.Equals(standings[1].Results) {
+		// It's still a tie
+		return standings[0].Player, true
 	}
-	return standings[m].Player
+	return standings[0].Player, false
 }
 
 func YellowPeriods(tournaments Tournaments) []YellowPeriod {
@@ -126,7 +79,7 @@ func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 	var currentPeriod *YellowPeriod
 	var season, seasonIndex int
 
-	sort.Sort(tournaments)
+	sort.Stable(tournaments)
 	for i := range tournaments {
 		if !tournaments[i].Played {
 			continue
@@ -201,8 +154,9 @@ func mostYellowDaysInSeason(yellowPeriods []YellowPeriod, season int) (uuid.UUID
 	return maxPlayer, max
 }
 
-func loserOfTheYear(monthPeriods []*MonthStats, season int) (uuid.UUID, int) {
+func loserOfTheYear(monthPeriods []*MonthStats, season int) ([]uuid.UUID, int) {
 	lastPlacesByPlayer := make(map[uuid.UUID]int)
+	playersByPlace := make(map[int][]uuid.UUID)
 
 	for _, mp := range monthPeriods {
 		if mp.Year != season {
@@ -212,19 +166,19 @@ func loserOfTheYear(monthPeriods []*MonthStats, season int) (uuid.UUID, int) {
 	}
 
 	max := 0
-	var maxPlayer uuid.UUID
 	for player, count := range lastPlacesByPlayer {
+		playersByPlace[count] = append(playersByPlace[count], player)
 		if count > max {
 			max = count
-			maxPlayer = player
 		}
 	}
 
-	return maxPlayer, max
+	return playersByPlace[max], max
 }
 
-func playerOfTheYear(monthPeriods []*MonthStats, season int) (uuid.UUID, int) {
+func playerOfTheYear(monthPeriods []*MonthStats, season int) ([]uuid.UUID, int) {
 	topPlacesByPlayer := make(map[uuid.UUID]int)
+	playersByPlace := make(map[int][]uuid.UUID)
 
 	for _, mp := range monthPeriods {
 		if mp.Year != season {
@@ -234,15 +188,14 @@ func playerOfTheYear(monthPeriods []*MonthStats, season int) (uuid.UUID, int) {
 	}
 
 	max := 0
-	var maxPlayer uuid.UUID
 	for player, count := range topPlacesByPlayer {
+		playersByPlace[count] = append(playersByPlace[count], player)
 		if count > max {
 			max = count
-			maxPlayer = player
 		}
 	}
 
-	return maxPlayer, max
+	return playersByPlace[max], max
 }
 
 func Titles(seasons []int) []*SeasonTitles {
@@ -266,7 +219,6 @@ func Titles(seasons []int) []*SeasonTitles {
 			}
 		}
 
-		// FIXME: Need enough tournaments to get titles..
 		seasonStandings.ByAvgPlace()
 		for i := range seasonStandings {
 			if seasonStandings[i].Enough {
@@ -276,6 +228,39 @@ func Titles(seasons []int) []*SeasonTitles {
 				break
 			}
 		}
+
+		players, c := playerOfTheYear(seasonStats.MonthStats, season)
+		if len(players) == 1 {
+			titles.PlayerOfTheYear.Uuid = players[0]
+		} else {
+		POTYLoop:
+			for _, p := range players {
+				for _, s := range seasonStandings {
+					if s.Player == p && s.Enough {
+						titles.PlayerOfTheYear.Uuid = p
+						break POTYLoop
+					}
+				}
+			}
+		}
+		titles.PlayerOfTheYear.Months = c
+
+		players, c = loserOfTheYear(seasonStats.MonthStats, season)
+		if len(players) == 1 {
+			titles.LoserOfTheYear.Uuid = players[0]
+		} else {
+		LOTYLoop:
+			for _, p := range players {
+				for i := len(seasonStandings) - 1; i >= 0; i-- {
+					if seasonStandings[i].Player == p && seasonStandings[i].Enough {
+						titles.LoserOfTheYear.Uuid = p
+						break LOTYLoop
+					}
+				}
+			}
+		}
+
+		titles.LoserOfTheYear.Months = c
 
 		seasonStandings.ByPoints()
 		for i := range seasonStandings {
@@ -287,18 +272,10 @@ func Titles(seasons []int) []*SeasonTitles {
 			}
 		}
 
-		// FIXME: These are missing tie breaks..
+		// FIXME: This is missing tie breaks..
 		p, d := mostYellowDaysInSeason(seasonStats.YellowPeriods, season)
 		titles.MostYellowDays.Uuid = p
 		titles.MostYellowDays.Days = d
-
-		p, c := playerOfTheYear(seasonStats.MonthStats, season)
-		titles.PlayerOfTheYear.Uuid = p
-		titles.PlayerOfTheYear.Months = c
-
-		p, c = loserOfTheYear(seasonStats.MonthStats, season)
-		titles.LoserOfTheYear.Uuid = p
-		titles.LoserOfTheYear.Months = c
 
 		titleList = append(titleList, titles)
 	}
@@ -326,7 +303,13 @@ func SeasonStats(seasons []int) *PeriodStats {
 
 	for _, season := range seasons {
 		byMonth := t.GroupByMonths(season)
-		for k, v := range byMonth {
+		var sortedMonths []int
+		for k := range byMonth {
+			sortedMonths = append(sortedMonths, int(k))
+		}
+		sort.Ints(sortedMonths)
+		for i := range sortedMonths {
+			v := byMonth[time.Month(i)]
 			monthStats := new(MonthStats)
 
 			played := v.Played()
@@ -335,15 +318,36 @@ func SeasonStats(seasons []int) *PeriodStats {
 				continue
 			}
 
-			sort.Sort(v)
+			sort.Stable(v)
 			monthStats.Year = season
-			monthStats.Month = k
+			monthStats.Month = time.Month(i)
 
-			monthStats.Best = BestPlayer(v)
-			println("Generating worst player for month", k, "in year", season)
-			println("    Based on ", len(v), "tournaments")
-			monthStats.Worst = WorstPlayer(v)
-			println("    Worst player:", monthStats.Worst.String())
+			best, tie := BestPlayer(v)
+			if tie {
+				var tiebreakTournaments Tournaments
+				for j := 1; j <= i; j++ {
+					tiebreakTournaments = append(tiebreakTournaments, byMonth[time.Month(j)]...)
+				}
+				best, tie = BestPlayer(tiebreakTournaments)
+				if tie {
+					println("    Warning: Tied for best player for month", i, "in year", season)
+				}
+
+			}
+			monthStats.Best = best
+			worst, tie := WorstPlayer(v)
+			if tie {
+				var tiebreakTournaments Tournaments
+				for j := 1; j <= int(i); j++ {
+					tiebreakTournaments = append(tiebreakTournaments, byMonth[time.Month(j)]...)
+				}
+
+				worst, tie = WorstPlayer(tiebreakTournaments)
+				if tie {
+					println("    Warning: Tied for worst player for month", i, "in year", season)
+				}
+			}
+			monthStats.Worst = worst
 
 			stats.MonthStats = append(stats.MonthStats, monthStats)
 		}

@@ -7,15 +7,84 @@ import (
 )
 
 type PlayerResult struct {
-	Place int       `json:"place"`
-	When  time.Time `json:"when"`
+	Place      int       `json:"place"`
+	When       time.Time `json:"when"`
+	NumPlayers int       `json:"numPlayers"`
 }
 
 type PlayerResults []PlayerResult
 
-func (s PlayerResults) Len() int           { return len(s) }
-func (s PlayerResults) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s PlayerResults) Less(i, j int) bool { return s[i].Place > s[j].Place }
+func (s PlayerResults) Len() int      { return len(s) }
+func (s PlayerResults) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s PlayerResults) Less(i, j int) bool {
+	if s[i].Place < s[j].Place {
+		return true
+	} else if s[i].Place > s[j].Place {
+		return false
+	} else {
+		return s[i].NumPlayers > s[j].NumPlayers
+	}
+}
+
+func (s PlayerResults) BetterThan(t PlayerResults) bool {
+
+	if len(t) == 0 {
+		return true
+	}
+
+	sort.Stable(s)
+	sort.Stable(t)
+
+	maxResults := len(t)
+	if len(t) > len(s) {
+		maxResults = len(s)
+	}
+
+	for i := 0; i < maxResults; i++ {
+		if s[i].Place < t[i].Place {
+			return true
+		}
+		if s[i].Place > t[i].Place {
+			return false
+		}
+		if s[i].NumPlayers > t[i].NumPlayers {
+			return true
+		}
+		if s[i].NumPlayers < t[i].NumPlayers {
+			return false
+		}
+
+	}
+
+	// If place and numPlayers still tie, it's "better" to have played more tournaments
+	if len(s) > len(t) {
+		return true
+	}
+
+	// t is best, or they are completely equal
+	return false
+}
+
+func (s PlayerResults) Equals(t PlayerResults) bool {
+
+	if len(t) != len(s) {
+		return false
+	}
+
+	sort.Stable(s)
+	sort.Stable(t)
+
+	for i := 0; i < len(t); i++ {
+		if s[i].Place != t[i].Place {
+			return false
+		}
+		if s[i].NumPlayers > t[i].NumPlayers {
+			return false
+		}
+	}
+
+	return true
+}
 
 type PlayerStanding struct {
 	Player     uuid.UUID     `json:"uuid"`
@@ -28,6 +97,19 @@ type PlayerStanding struct {
 	NumPlayed  int           `json:"played"`
 	Enough     bool          `json:"playedEnough"`
 	NumTotal   int           `json:"numTotal"`
+}
+
+func (s *PlayerStanding) Equals(t *PlayerStanding) bool {
+	if s == t {
+		return true
+	}
+	if !s.Results.Equals(t.Results) {
+		return false
+	}
+	if s.Winnings != t.Winnings || s.AvgPlace != t.AvgPlace || s.Points != t.Points || s.NumHeadsUp != t.NumHeadsUp || s.NumWins != t.NumWins || s.NumPlayed != t.NumPlayed || s.NumTotal != t.NumTotal {
+		return false
+	}
+	return true
 }
 
 type PlayerStandings []*PlayerStanding
@@ -43,7 +125,6 @@ func (existingPS PlayerStandings) Combine(newPS PlayerStandings) PlayerStandings
 		for _, ops := range existingPS {
 			if nps.Player == ops.Player {
 				foundInOld = true
-
 				cps := new(PlayerStanding)
 				cps.Player = ops.Player
 				cps.Results = append(ops.Results, nps.Results...)
@@ -127,6 +208,22 @@ func (s ByWinningsOld) Less(i, j int) bool {
 			if s.PlayerStandings[i].NumWins < s.PlayerStandings[j].NumWins {
 				return true
 			}
+		}
+	}
+	return false
+}
+
+type ByBestPlayer struct{ PlayerStandings }
+
+func (s ByBestPlayer) Less(i, j int) bool {
+	a, b := s.PlayerStandings[i], s.PlayerStandings[j]
+	if a.AvgPlace < b.AvgPlace {
+		return true
+	}
+
+	if a.AvgPlace == b.AvgPlace {
+		if a.Results.BetterThan(b.Results) {
+			return true
 		}
 	}
 	return false
@@ -253,8 +350,9 @@ func NewStandings(tournaments Tournaments) PlayerStandings {
 		for i, player := range t.Result {
 			place := i + 1
 			results[player] = append(results[player], PlayerResult{
-				Place: place,
-				When:  t.Info.Scheduled,
+				Place:      place,
+				When:       t.Info.Scheduled,
+				NumPlayers: len(t.Result),
 			})
 
 			sumPlace[player] += place
@@ -404,13 +502,21 @@ func (s PlayerStandings) ByWinnings(oldTieBreak bool) {
 }
 
 func (s PlayerStandings) ByAvgPlace() {
-	sort.Sort(ByAvgPlace{s})
+	sort.Stable(ByAvgPlace{s})
 }
 
 func (s PlayerStandings) ByPoints() {
-	sort.Sort(ByPoints{s})
+	sort.Stable(ByPoints{s})
 }
 
 func (s PlayerStandings) ByHeadsUp() {
-	sort.Sort(sort.Reverse(ByHeadsUp{s}))
+	sort.Stable(sort.Reverse(ByHeadsUp{s}))
+}
+
+func (s PlayerStandings) ByBestPlayer() {
+	sort.Stable(ByBestPlayer{s})
+}
+
+func (s PlayerStandings) ByWorstPlayer() {
+	sort.Stable(sort.Reverse(ByBestPlayer{s}))
 }
