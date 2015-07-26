@@ -164,10 +164,13 @@ func (s PlayerStandings) Len() int      { return len(s) }
 func (s PlayerStandings) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 type SortedStandings struct {
-	ByWinnings PlayerStandings `json:"byWinnings"`
-	ByAvgPlace PlayerStandings `json:"byAvgPlace"`
-	ByPoints   PlayerStandings `json:"byPoints"`
-	ByHeadsUp  PlayerStandings `json:"byHeadsUp"`
+	ByWinnings      PlayerStandings `json:"byWinnings"`
+	ByAvgPlace      PlayerStandings `json:"byAvgPlace"`
+	ByPoints        PlayerStandings `json:"byPoints"`
+	ByHeadsUp       PlayerStandings `json:"byHeadsUp"`
+	ByWinRatio      PlayerStandings `json:"byWinRatio"`
+	ByWinRatioTotal PlayerStandings `json:"byWinRatioTotal"`
+	ByNumPlayed     PlayerStandings `json:"byNumPlayed"`
 }
 
 type ByWinnings struct{ PlayerStandings }
@@ -298,6 +301,60 @@ func (s ByHeadsUp) Less(i, j int) bool {
 	return false
 }
 
+type ByWinRatio struct{ PlayerStandings }
+
+func (s ByWinRatio) Less(i, j int) bool {
+	a := float64(s.PlayerStandings[i].NumWins) / float64(s.PlayerStandings[i].NumPlayed)
+	b := float64(s.PlayerStandings[j].NumWins) / float64(s.PlayerStandings[j].NumPlayed)
+
+	if a > b {
+		return true
+	}
+
+	if a == b {
+		if s.PlayerStandings[i].NumWins > s.PlayerStandings[j].NumWins {
+			return true
+		}
+	}
+	return false
+}
+
+type ByWinRatioTotal struct{ PlayerStandings }
+
+func (s ByWinRatioTotal) Less(i, j int) bool {
+	a := float64(s.PlayerStandings[i].NumWins) / float64(s.PlayerStandings[i].NumTotal)
+	b := float64(s.PlayerStandings[j].NumWins) / float64(s.PlayerStandings[j].NumTotal)
+
+	if a > b {
+		return true
+	}
+
+	if a == b {
+		if s.PlayerStandings[i].NumWins > s.PlayerStandings[j].NumWins {
+			return true
+		}
+	}
+	return false
+}
+
+type ByNumPlayed struct{ PlayerStandings }
+
+func (s ByNumPlayed) Less(i, j int) bool {
+	a := s.PlayerStandings[i].NumPlayed
+	b := s.PlayerStandings[j].NumPlayed
+
+	if a > b {
+		return true
+	}
+
+	if a == b {
+		if s.PlayerStandings[i].NumWins > s.PlayerStandings[j].NumWins {
+			return true
+		}
+	}
+	return false
+}
+
 func getActivePlayers(tournaments Tournaments) ([]uuid.UUID, int) {
 	var activePlayers []uuid.UUID
 
@@ -340,12 +397,13 @@ func NewStandings(tournaments Tournaments) PlayerStandings {
 	numWins := make(map[uuid.UUID]int)
 	numPlayed := make(map[uuid.UUID]int)
 	results := make(map[uuid.UUID][]PlayerResult)
+	numTotal := 0
 
 	for _, t := range tournaments {
 		if !t.Played || len(t.Result) == 0 {
 			continue
 		}
-
+		numTotal += 1
 		seenPlayer := make(map[uuid.UUID]bool)
 		for i, player := range t.Result {
 			place := i + 1
@@ -420,7 +478,7 @@ func NewStandings(tournaments Tournaments) PlayerStandings {
 			NumWins:    numWins[player],
 			NumPlayed:  numPlayed[player],
 			Enough:     enough,
-			NumTotal:   len(tournaments),
+			NumTotal:   numTotal,
 		})
 	}
 
@@ -457,6 +515,18 @@ func TotalStandings(seasons []int) *SortedStandings {
 	totalStandings.ByHeadsUp()
 	sortedStandings.ByHeadsUp = totalStandings
 
+	totalStandings = totalStandings.Duplicate()
+	totalStandings.ByWinRatio()
+	sortedStandings.ByWinRatio = totalStandings
+
+	totalStandings = totalStandings.Duplicate()
+	totalStandings.ByWinRatioTotal()
+	sortedStandings.ByWinRatioTotal = totalStandings
+
+	totalStandings = totalStandings.Duplicate()
+	totalStandings.ByNumPlayed()
+	sortedStandings.ByNumPlayed = totalStandings
+
 	return sortedStandings
 
 }
@@ -487,6 +557,18 @@ func SeasonStandings(season int) *SortedStandings {
 	standings.ByHeadsUp()
 	sortedStandings.ByHeadsUp = standings
 
+	standings = standings.Duplicate()
+	standings.ByWinRatio()
+	sortedStandings.ByWinRatio = standings
+
+	standings = standings.Duplicate()
+	standings.ByWinRatioTotal()
+	sortedStandings.ByWinRatioTotal = standings
+
+	standings = standings.Duplicate()
+	standings.ByNumPlayed()
+	sortedStandings.ByNumPlayed = standings
+
 	return sortedStandings
 }
 
@@ -515,6 +597,18 @@ func (s PlayerStandings) ByHeadsUp() {
 
 func (s PlayerStandings) ByBestPlayer() {
 	sort.Stable(ByBestPlayer{s})
+}
+
+func (s PlayerStandings) ByWinRatio() {
+	sort.Stable(ByWinRatio{s})
+}
+
+func (s PlayerStandings) ByWinRatioTotal() {
+	sort.Stable(ByWinRatioTotal{s})
+}
+
+func (s PlayerStandings) ByNumPlayed() {
+	sort.Stable(ByNumPlayed{s})
 }
 
 func (s PlayerStandings) ByWorstPlayer() {

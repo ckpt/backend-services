@@ -116,7 +116,7 @@ func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 	return periods
 }
 
-func mostYellowDaysInSeason(yellowPeriods []YellowPeriod, season int) (uuid.UUID, int) {
+func YellowDaysInSeason(yellowPeriods []YellowPeriod, season int) map[uuid.UUID]int {
 	seasonStartDate := time.Date(season, 1, 1, 0, 0, 0, 0, time.Local)
 	seasonEndDate := seasonStartDate.AddDate(1, 0, 0)
 
@@ -141,7 +141,11 @@ func mostYellowDaysInSeason(yellowPeriods []YellowPeriod, season int) (uuid.UUID
 		days := int(p.To.Sub(p.From).Hours() / 24)
 		daysByPlayer[p.Player] += days
 	}
+	return daysByPlayer
+}
 
+func mostYellowDaysInSeason(yellowPeriods []YellowPeriod, season int) (uuid.UUID, int) {
+	daysByPlayer := YellowDaysInSeason(yellowPeriods, season)
 	max := 0
 	var maxPlayer uuid.UUID
 	for p, d := range daysByPlayer {
