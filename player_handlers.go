@@ -187,7 +187,7 @@ func setUserPassword(c web.C, w http.ResponseWriter, r *http.Request) *appError 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	pUUID, err := uuid.FromString(c.URLParams["uuid"])
 
-	if !c.Env["authIsAdmin"].(bool) || c.Env["authPlayer"].(uuid.UUID) != pUUID {
+	if !c.Env["authIsAdmin"].(bool) && c.Env["authPlayer"].(uuid.UUID) != pUUID {
 		return &appError{errors.New("Unauthorized"), "Must be correct user or admin to set password", 403}
 	}
 
