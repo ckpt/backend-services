@@ -111,5 +111,13 @@ func main() {
 	goji.Get("/seasons/:year/titles", appHandler(getSeasonTitles))
 	goji.Get("/seasons/:year/stats", appHandler(getSeasonStats))
 
+	goji.Get("/caterings", appHandler(listAllCaterings))
+	goji.Post("/caterings", appHandler(createNewCatering))
+	goji.Get("/caterings/:uuid", appHandler(getCatering))
+	goji.Put("/caterings/:uuid", appHandler(updateCateringInfo))
+	goji.Patch("/caterings/:uuid", appHandler(updateCateringInfo))
+	//goji.Post("/caterings/:uuid/votes", appHandler(addCateringVote))
+	//goji.Put("/caterings/:uuid/votes/:playeruuid", appHandler(updateCateringVote))
+
 	goji.Serve()
 }
