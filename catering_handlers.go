@@ -66,3 +66,49 @@ func updateCateringInfo(c web.C, w http.ResponseWriter, r *http.Request) *appErr
 	w.WriteHeader(204)
 	return nil
 }
+
+func addCateringVote(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	uuid, err := uuid.FromString(c.URLParams["uuid"])
+	catering, err := caterings.CateringByUUID(uuid)
+	if err != nil {
+		return &appError{err, "Cant find catering", 404}
+	}
+	tempInfo := new(caterings.Vote)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(tempInfo); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if err := catering.AddVote(tempInfo.Player, tempInfo.Score); err != nil {
+		return &appError{err, "Failed to add catering vote", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+func updateCateringVote(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	cateringuuid, err := uuid.FromString(c.URLParams["uuid"])
+	playeruuid, err := uuid.FromString(c.URLParams["playeruuid"])
+	catering, err := caterings.CateringByUUID(cateringuuid)
+	if err != nil {
+		return &appError{err, "Cant find catering", 404}
+	}
+
+	tempInfo := new(caterings.Vote)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(tempInfo); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if err := catering.RemoveVote(playeruuid); err != nil {
+		return &appError{err, "Failed to remove old catering vote when updating", 500}
+	}
+
+	if err := catering.AddVote(playeruuid, tempInfo.Score); err != nil {
+		return &appError{err, "Failed to add updated catering vote", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}

@@ -80,3 +80,26 @@ func (c *Catering) UpdateInfo(ci Info) error {
 	}
 	return nil
 }
+
+func (c *Catering) AddVote(player uuid.UUID, score int) error {
+	vote := Vote{Player: player, Score: score}
+	c.Votes = append(c.Votes, vote)
+	err := storage.Store(c)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store updated catering info with added vote")
+	}
+	return nil
+}
+
+func (c *Catering) RemoveVote(player uuid.UUID) error {
+	for i, v := range c.Votes {
+		if v.Player == player {
+			c.Votes = append(c.Votes[:i], c.Votes[i+1:]...)
+		}
+	}
+	err := storage.Store(c)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store updated catering info with removed vote")
+	}
+	return nil
+}
