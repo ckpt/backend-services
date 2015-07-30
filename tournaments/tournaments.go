@@ -24,6 +24,7 @@ type Bet struct {
 
 type Info struct {
 	Scheduled time.Time `json:"scheduled"`
+	MovedFrom time.Time `json:"movedFrom"`
 	Stake     int       `json:"stake"`
 	Location  uuid.UUID `json:"location"`
 	Catering  uuid.UUID `json:"catering"`
@@ -36,6 +37,7 @@ type Tournament struct {
 	Noshows []Absentee `json:"noshows"`
 	Result  Result     `json:"result"`
 	Played  bool       `json:"played"`
+	Moved   bool       `json:"moved"`
 	Bets    []Bet      `json:"bets"`
 }
 
