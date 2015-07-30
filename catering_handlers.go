@@ -19,7 +19,7 @@ func createNewCatering(c web.C, w http.ResponseWriter, r *http.Request) *appErro
 	if err != nil {
 		return &appError{err, "Failed to create new catering", 500}
 	}
-	w.Header().Set("Catering", "/caterings/"+nCatering.UUID.String())
+	w.Header().Set("Location", "/caterings/"+nCatering.UUID.String())
 	w.WriteHeader(201)
 	return nil
 }
