@@ -119,5 +119,11 @@ func main() {
 	goji.Post("/caterings/:uuid/votes", appHandler(addCateringVote))
 	goji.Put("/caterings/:uuid/votes/:playeruuid", appHandler(updateCateringVote))
 
+	goji.Get("/news", appHandler(listAllNews))
+	goji.Get("/news/:uuid", appHandler(getNewsItem))
+	goji.Patch("/news/:uuid", appHandler(updateNewsItem))
+	goji.Post("/news", appHandler(createNewNewsItem))
+	// TODO: Comments
+
 	goji.Serve()
 }
