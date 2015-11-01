@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/ckpt/backend-services/news"
 	"github.com/m4rw3r/uuid"
 	"github.com/zenazn/goji/web"
@@ -49,10 +50,13 @@ func getNewsItem(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 
 func updateNewsItem(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	uuid, err := uuid.FromString(c.URLParams["uuid"])
-	newsItem, err := news.NewsItemByUUID(uuid)
+	newsUUID, err := uuid.FromString(c.URLParams["uuid"])
+	newsItem, err := news.NewsItemByUUID(newsUUID)
 	if err != nil {
 		return &appError{err, "Cant find NewsItem", 404}
+	}
+	if !c.Env["authIsAdmin"].(bool) && c.Env["authPlayer"].(uuid.UUID) != newsItem.Author {
+		return &appError{errors.New("Unauthorized"), "Must be author or admin to update news item", 403}
 	}
 	tempNewsItem := new(news.NewsItem)
 	decoder := json.NewDecoder(r.Body)
