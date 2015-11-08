@@ -212,3 +212,99 @@ func setUserPassword(c web.C, w http.ResponseWriter, r *http.Request) *appError 
 	w.WriteHeader(204)
 	return nil
 }
+
+func showPlayerDebt(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	if !c.Env["authIsAdmin"].(bool) && c.Env["authPlayer"].(uuid.UUID) != pUUID {
+		return &appError{errors.New("Unauthorized"), "Must be player or admin to show debt", 403}
+	}
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(player.Debts)
+	return nil
+}
+
+func showPlayerCredits(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	if !c.Env["authIsAdmin"].(bool) && c.Env["authPlayer"].(uuid.UUID) != pUUID {
+		return &appError{errors.New("Unauthorized"), "Must be player or admin to show credits", 403}
+	}
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	credits, _ := player.Credits()
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(credits)
+	return nil
+}
+
+func addPlayerDebt(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	nDebt := new(players.Debt)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(nDebt); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if !c.Env["authIsAdmin"].(bool) &&
+		(c.Env["authPlayer"].(uuid.UUID) == pUUID ||
+			c.Env["authPlayer"].(uuid.UUID) != nDebt.Creditor) {
+		return &appError{errors.New("Unauthorized"), "Must be creditor or admin to add debt", 403}
+	}
+
+	err = player.AddDebt(*nDebt)
+	if err != nil {
+		return &appError{err, "Failed to add debt", 500}
+	}
+	w.Header().Set("Location", "/players/"+pUUID.String()+"/debts")
+	w.WriteHeader(201)
+	return nil
+}
+
+func settlePlayerDebt(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+	dUUID, err := uuid.FromString(c.URLParams["debtuuid"])
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	debt, err := player.DebtByUUID(dUUID)
+	if err != nil {
+		return &appError{err, "Cant find debt for player", 404}
+	}
+
+	if !c.Env["authIsAdmin"].(bool) && c.Env["authPlayer"].(uuid.UUID) != debt.Creditor {
+		return &appError{errors.New("Unauthorized"), "Must be creditor or admin to settle debt", 403}
+	}
+
+	err = player.SettleDebt(dUUID)
+	if err != nil {
+		return &appError{err, "Failed to settle debt", 500}
+	}
+	w.Header().Set("Location", "/players/"+pUUID.String()+"/debts")
+	w.WriteHeader(201)
+	return nil
+}

@@ -66,7 +66,7 @@ func main() {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedHeaders: []string{"*"},
-		AllowedMethods: []string{"GET", "PUT", "PATCH", "POST", "OPTIONS"},
+		AllowedMethods: []string{"GET", "PUT", "PATCH", "POST", "OPTIONS", "DELETE"},
 	})
 	goji.Use(c.Handler)
 	goji.Use(middleware.TokenHandler)
@@ -83,6 +83,10 @@ func main() {
 	goji.Get("/players/:uuid/user", appHandler(getUserForPlayer))
 	goji.Put("/players/:uuid/user", appHandler(setUserForPlayer))
 	goji.Put("/players/:uuid/user/password", appHandler(setUserPassword))
+	goji.Get("/players/:uuid/debts", appHandler(showPlayerDebt))
+	goji.Get("/players/:uuid/credits", appHandler(showPlayerCredits))
+	goji.Post("/players/:uuid/debts", appHandler(addPlayerDebt))
+	goji.Delete("/players/:uuid/debts/:debtuuid", appHandler(settlePlayerDebt))
 
 	goji.Post("/users", appHandler(createNewUser))
 

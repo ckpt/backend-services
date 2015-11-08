@@ -2,6 +2,7 @@ package players
 
 import (
 	"errors"
+	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -32,6 +33,8 @@ type Player struct {
 	Gossip     map[string]string `json:"gossip"`
 	Complaints []Complaint       `json:"complaints"`
 	Votes      []Vote            `json:"votes"`
+	// Debts where this player is the debitor
+	Debts []Debt `json:"debts"`
 }
 
 // The basic profile of the player
@@ -43,13 +46,15 @@ type Profile struct {
 	Description string    `json:"description"`
 }
 
-// A debt from one player to another
+// A debt to another player (hte creditor)
 type Debt struct {
-	UUID     uuid.UUID `json:"uuid"`
-	Debitor  *Player   `json:"debitor"`
-	Creditor *Player   `json:"creditor"`
-	Due      time.Time `json:"due"`
-	Amount   int       `json:"amount"`
+	UUID        uuid.UUID `json:"uuid"`
+	Debitor     uuid.UUID `json:"debitor"`
+	Creditor    uuid.UUID `json:"creditor"`
+	Description string    `json:"description"`
+	Amount      int       `json:"amount"`
+	Created     time.Time `json:"created"`
+	Settled     time.Time `josn:"settled"`
 }
 
 // A complaint from another player
@@ -167,4 +172,55 @@ func (p *Player) SetActive(active bool) error {
 		return errors.New("Could not change active status")
 	}
 	return nil
+}
+func (p *Player) AddDebt(d Debt) error {
+	newDebt := new(Debt)
+	if err := mergo.MergeWithOverwrite(newDebt, d); err != nil {
+		return errors.New(err.Error() + " - Could not set Debt data")
+	}
+	newDebt.UUID, _ = uuid.V4()
+	newDebt.Created = time.Now()
+	newDebt.Debitor = p.UUID
+	newDebt.Settled = time.Time{}
+	p.Debts = append(p.Debts, *newDebt)
+	err := storage.Store(p)
+	if err != nil {
+		return errors.New("Could not add debt")
+	}
+	return nil
+}
+func (p *Player) SettleDebt(uuid uuid.UUID) error {
+	for i, debt := range p.Debts {
+		if debt.UUID == uuid {
+			p.Debts[i].Settled = time.Now()
+		}
+	}
+	err := storage.Store(p)
+	if err != nil {
+		return errors.New("Could not settle debt")
+	}
+	return nil
+}
+func (p *Player) DebtByUUID(uuid uuid.UUID) (*Debt, error) {
+	for _, debt := range p.Debts {
+		if debt.UUID == uuid {
+			return &debt, nil
+		}
+	}
+	return nil, errors.New("Debt not found")
+}
+func (creditor *Player) Credits() ([]Debt, error) {
+	var credits []Debt
+	all, _ := AllPlayers()
+	for _, p := range all {
+		if p.UUID == creditor.UUID {
+			continue
+		}
+		for _, d := range p.Debts {
+			if d.Creditor == creditor.UUID {
+				credits = append(credits, d)
+			}
+		}
+	}
+	return credits, nil
 }

@@ -23,6 +23,8 @@ func NewUser(player uuid.UUID, userdata *User) (*User, error) {
 		return nil, err
 	}
 	p.User = *userdata
+	//fmt.Println("Creating user:")
+	//fmt.Printf("%v", p.User)
 	err = storage.Store(p)
 	if err != nil {
 		return nil,
