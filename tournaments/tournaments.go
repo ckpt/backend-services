@@ -118,9 +118,13 @@ func validateTournamentInfo(info Info) error {
 }
 
 func fixupTournamentInfo(oldinfo *Info, newinfo Info) {
-	if oldinfo.Scheduled != newinfo.Scheduled {
+	if !newinfo.Scheduled.IsZero() && oldinfo.Scheduled != newinfo.Scheduled {
 		oldinfo.Scheduled = newinfo.Scheduled
 	}
+	if !newinfo.MovedFrom.IsZero() && oldinfo.MovedFrom != newinfo.MovedFrom {
+		oldinfo.MovedFrom = newinfo.MovedFrom
+	}
+
 }
 
 // Create a Tournament
