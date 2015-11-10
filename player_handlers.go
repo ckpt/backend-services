@@ -305,6 +305,27 @@ func settlePlayerDebt(c web.C, w http.ResponseWriter, r *http.Request) *appError
 		return &appError{err, "Failed to settle debt", 500}
 	}
 	w.Header().Set("Location", "/players/"+pUUID.String()+"/debts")
-	w.WriteHeader(201)
+	w.WriteHeader(204)
+	return nil
+}
+
+func resetPlayerDebts(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	if !c.Env["authIsAdmin"].(bool) {
+		return &appError{errors.New("Unauthorized"), "Must be admin to reset debts", 403}
+	}
+
+	err = player.ResetDebt()
+	if err != nil {
+		return &appError{err, "Failed to reset debts", 500}
+	}
+	w.WriteHeader(204)
 	return nil
 }

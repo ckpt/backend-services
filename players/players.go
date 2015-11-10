@@ -179,9 +179,15 @@ func (p *Player) AddDebt(d Debt) error {
 		return errors.New(err.Error() + " - Could not set Debt data")
 	}
 	newDebt.UUID, _ = uuid.V4()
-	newDebt.Created = time.Now()
+	if (d.Created.IsZero()) {
+		newDebt.Created = time.Now()
+	} else {
+		newDebt.Created = d.Created
+	}
+	if (!d.Settled.IsZero()) {
+		newDebt.Settled = d.Settled
+	}
 	newDebt.Debitor = p.UUID
-	newDebt.Settled = time.Time{}
 	p.Debts = append(p.Debts, *newDebt)
 	err := storage.Store(p)
 	if err != nil {
@@ -201,6 +207,15 @@ func (p *Player) SettleDebt(uuid uuid.UUID) error {
 	}
 	return nil
 }
+func (p *Player) ResetDebt() error {
+	p.Debts = []Debt{}
+	err := storage.Store(p)
+	if err != nil {
+		return errors.New("Could not reset debt")
+	}
+	return nil
+}
+
 func (p *Player) DebtByUUID(uuid uuid.UUID) (*Debt, error) {
 	for _, debt := range p.Debts {
 		if debt.UUID == uuid {

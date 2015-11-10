@@ -84,6 +84,7 @@ func main() {
 	goji.Put("/players/:uuid/user", appHandler(setUserForPlayer))
 	goji.Put("/players/:uuid/user/password", appHandler(setUserPassword))
 	goji.Get("/players/:uuid/debts", appHandler(showPlayerDebt))
+	goji.Delete("/players/:uuid/debts", appHandler(resetPlayerDebts))
 	goji.Get("/players/:uuid/credits", appHandler(showPlayerCredits))
 	goji.Post("/players/:uuid/debts", appHandler(addPlayerDebt))
 	goji.Delete("/players/:uuid/debts/:debtuuid", appHandler(settlePlayerDebt))
