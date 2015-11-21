@@ -53,25 +53,25 @@ type SeasonTitles struct {
 	} `json:"loserOfTheYear"`
 }
 
-func BestPlayer(tournaments Tournaments) (uuid.UUID, bool) {
+func BestPlayer(tournaments Tournaments) (PlayerStandings, bool) {
 	standings := NewStandings(tournaments)
 	standings.ByBestPlayer()
 
 	if standings[0].Results.Equals(standings[1].Results) {
 		// It's still a tie
-		return standings[0].Player, true
+		return standings, true
 	}
-	return standings[0].Player, false
+	return standings, false
 }
 
-func WorstPlayer(tournaments Tournaments) (uuid.UUID, bool) {
+func WorstPlayer(tournaments Tournaments) (PlayerStandings, bool) {
 	standings := NewStandings(tournaments)
 	standings.ByWorstPlayer()
 	if standings[0].Results.Equals(standings[1].Results) {
 		// It's still a tie
-		return standings[0].Player, true
+		return standings, true
 	}
-	return standings[0].Player, false
+	return standings, false
 }
 
 func YellowPeriods(tournaments Tournaments) []YellowPeriod {
@@ -327,31 +327,45 @@ func SeasonStats(seasons []int) *PeriodStats {
 			monthStats.Month = time.Month(i)
 
 			best, tie := BestPlayer(v)
+			bestplayer := best[0].Player
 			if tie {
 				var tiebreakTournaments Tournaments
 				for j := 1; j <= i; j++ {
 					tiebreakTournaments = append(tiebreakTournaments, byMonth[time.Month(j)]...)
 				}
-				best, tie = BestPlayer(tiebreakTournaments)
+				tiebest, tie := BestPlayer(tiebreakTournaments)
 				if tie {
 					println("    Warning: Tied for best player for month", i, "in year", season)
 				}
-
+				for p := range tiebest {
+					if tiebest[p].Player == best[0].Player || tiebest[p].Player == best[1].Player {
+						bestplayer = tiebest[p].Player
+						break
+					}
+				}
 			}
-			monthStats.Best = best
+			monthStats.Best = bestplayer
+
 			worst, tie := WorstPlayer(v)
+			worstplayer := worst[0].Player
 			if tie {
 				var tiebreakTournaments Tournaments
 				for j := 1; j <= int(i); j++ {
 					tiebreakTournaments = append(tiebreakTournaments, byMonth[time.Month(j)]...)
 				}
 
-				worst, tie = WorstPlayer(tiebreakTournaments)
+				tieworst, tie := WorstPlayer(tiebreakTournaments)
 				if tie {
 					println("    Warning: Tied for worst player for month", i, "in year", season)
 				}
+				for p := range tieworst {
+					if tieworst[p].Player == worst[0].Player || tieworst[p].Player == worst[1].Player {
+						worstplayer = tieworst[p].Player
+						break
+					}
+				}
 			}
-			monthStats.Worst = worst
+			monthStats.Worst = worstplayer
 
 			stats.MonthStats = append(stats.MonthStats, monthStats)
 		}
