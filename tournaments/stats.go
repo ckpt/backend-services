@@ -312,7 +312,7 @@ func SeasonStats(seasons []int) *PeriodStats {
 			sortedMonths = append(sortedMonths, int(k))
 		}
 		sort.Ints(sortedMonths)
-		for i := range sortedMonths {
+		for _,i := range sortedMonths {
 			v := byMonth[time.Month(i)]
 			monthStats := new(MonthStats)
 
