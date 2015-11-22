@@ -2,13 +2,18 @@ package news
 
 import (
 	"errors"
+	"os"
 	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
+	"github.com/ckpt/backend-services/utils"
 	"time"
 )
 
 // We use dummy in memory storage for now
 var storage NewsItemStorage = NewRedisNewsItemStorage()
+
+// Init a message queue
+var eventqueue utils.AMQPQueue = utils.NewRMQ(os.Getenv("CKPT_AMQP_URL"), "ckpt.events")
 
 type NewsItem struct {
 	UUID     uuid.UUID `json:"uuid"`
@@ -62,6 +67,10 @@ func NewNewsItem(itemdata NewsItem, author uuid.UUID) (*NewsItem, error) {
 	if err := storage.Store(c); err != nil {
 		return nil, errors.New(err.Error() + " - Could not write NewsItem to storage")
 	}
+	eventqueue.Publish(utils.CKPTEvent{
+		Type: utils.NEWS_EVENT,
+		Subject: "Nytt bidrag lagt ut",
+		Message: "Det er lagt ut et nytt bidrag på ckpt.no!",})
 	return c, nil
 }
 

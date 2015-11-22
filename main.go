@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 
 	"github.com/rs/cors"
 	"github.com/zenazn/goji"
@@ -62,7 +63,19 @@ func login(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 }
 
 func main() {
-	//fmt.Printf("%+v\n", getMembers())
+	//
+	// Event queue hadling
+	//
+	err := players.StartEventProcessor()
+	if err != nil {
+		println(err.Error)
+		println("Could not initialize event queue. Exiting")
+		os.Exit(1)
+	}
+
+	//
+	// HTTP Serving
+	//
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedHeaders: []string{"*"},
@@ -83,6 +96,7 @@ func main() {
 	goji.Get("/players/:uuid/user", appHandler(getUserForPlayer))
 	goji.Put("/players/:uuid/user", appHandler(setUserForPlayer))
 	goji.Put("/players/:uuid/user/password", appHandler(setUserPassword))
+	goji.Put("/players/:uuid/user/settings", appHandler(setUserSettings))
 	goji.Get("/players/:uuid/debts", appHandler(showPlayerDebt))
 	goji.Delete("/players/:uuid/debts", appHandler(resetPlayerDebts))
 	goji.Get("/players/:uuid/credits", appHandler(showPlayerCredits))

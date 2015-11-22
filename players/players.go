@@ -4,12 +4,17 @@ import (
 	"errors"
 	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
+	"github.com/ckpt/backend-services/utils"
 	"golang.org/x/crypto/bcrypt"
 	"time"
+	"os"
 )
 
 // We use dummy in memory storage for now
 var storage PlayerStorage = NewRedisPlayerStorage()
+
+// Init a message queue
+var eventqueue utils.AMQPQueue = utils.NewRMQ(os.Getenv("CKPT_AMQP_URL"), "ckpt.events")
 
 // Constants
 type VoteType int
@@ -145,6 +150,14 @@ func (p *Player) SetUserPassword(password string) error {
 	p.User.password = string(hashedPassword)
 	if err := storage.Store(p); err != nil {
 		return errors.New(err.Error() + " - Could not change player user password")
+	}
+	return nil
+}
+
+func (p *Player) SetUserSettings(settings UserSettings) error {
+	p.User.Settings = settings
+	if err := storage.Store(p); err != nil {
+		return errors.New(err.Error() + " - Could not change player user settings")
 	}
 	return nil
 }

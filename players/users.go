@@ -53,3 +53,7 @@ func AuthUser(username string, password string) bool {
 	}
 	return false
 }
+
+func (u *User) SubscribedTo(et string) bool {
+	return u.Settings.Notifications[et]
+}
