@@ -103,6 +103,7 @@ func main() {
 	goji.Get("/players/:uuid/credits", appHandler(showPlayerCredits))
 	goji.Post("/players/:uuid/debts", appHandler(addPlayerDebt))
 	goji.Delete("/players/:uuid/debts/:debtuuid", appHandler(settlePlayerDebt))
+	goji.Post("/players/notification_test", appHandler(testPlayerNotify))
 
 	goji.Post("/users", appHandler(createNewUser))
 

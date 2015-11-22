@@ -355,3 +355,15 @@ func resetPlayerDebts(c web.C, w http.ResponseWriter, r *http.Request) *appError
 	w.WriteHeader(204)
 	return nil
 }
+
+func testPlayerNotify(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if !c.Env["authIsAdmin"].(bool) {
+		return &appError{errors.New("Unauthorized"), "Must be admin to test notifications", 403}
+	}
+
+	players.NotifyUser("Panzer", "knumor@gmail.com", "Test", "Åpenbar test")
+	w.WriteHeader(204)
+	return nil
+}

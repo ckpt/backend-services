@@ -31,7 +31,7 @@ func StartEventProcessor() error {
 			}
 			for _, p := range allPlayers {
 				if p.User.SubscribedTo(utils.TypeNames[event.Type]) {
-					notifyUser(p.Nick, p.Profile.Email, event.Subject, event.Message)
+					NotifyUser(p.Nick, p.Profile.Email, event.Subject, event.Message)
 				}
 			}
 			msg.Ack(false)
@@ -41,7 +41,7 @@ func StartEventProcessor() error {
 	return nil
 }
 
-func notifyUser(name, email, subject, message string) {
+func NotifyUser(name, email, subject, message string) {
 	fmt.Printf("Notifying %s with subject:\n", email)
 	fmt.Printf("%s\n", subject)
 	
