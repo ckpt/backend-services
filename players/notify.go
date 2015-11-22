@@ -49,8 +49,11 @@ func notifyUser(name, email, subject, message string) {
 	gun := mailgun.NewMailgun("mail.ckpt.no", os.Getenv("CKPT_MAILGUN_KEY"), "pubkey-b3e133632123a0da24d1e2c5842039b6")
 	m := mailgun.NewMessage("CKPT <notifications@mail.ckpt.no>", subject, message, mailto)
 	m.AddHeader("Content-Type", "text/plain; charset=\"utf-8\"")
-	response, id, _ := gun.Send(m)
+	response, id, err := gun.Send(m)
 	
+	if err != nil {
+		fmt.Printf("Error:\n%+v\n", err.Error)
+	}
 	fmt.Printf("Response ID: %s\n", id)
 	fmt.Printf("Message from server: %s\n", response)
 }
