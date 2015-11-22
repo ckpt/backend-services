@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"fmt"
 
 	"github.com/rs/cors"
 	"github.com/zenazn/goji"
@@ -68,7 +69,7 @@ func main() {
 	//
 	err := players.StartEventProcessor()
 	if err != nil {
-		println(err.Error)
+		fmt.Printf("%+v", err.Error)
 		println("Could not initialize event queue. Exiting")
 		os.Exit(1)
 	}
