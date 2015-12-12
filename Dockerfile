@@ -1,5 +1,4 @@
-FROM FROM alpine:3.2
-RUN apk add --update ca-certificates # Certificates for SSL
+FROM busybox:ubuntu-14.04
 COPY backend-services .
 COPY docker-entrypoint.sh .
 EXPOSE 8000
