@@ -17,12 +17,14 @@ func StartEventProcessor() error {
 		return err
 	}
 	go func() {
+		fmt.Printf("Entering main event processor loop")
 		for msg := range events {
 			
 			// Fetch event
 			var event utils.CKPTEvent
 			_ = json.Unmarshal(msg.Body, &event)
-			
+			fmt.Printf("Found new event of type: %d", event.Type)
+
 			// Notify subscribers
 			allPlayers, err := AllPlayers()
 			if err != nil {
@@ -30,7 +32,9 @@ func StartEventProcessor() error {
 				continue
 			}
 			for _, p := range allPlayers {
+				fmt.Printf("Checking if user %s should be notified", p.Nick)
 				if p.User.SubscribedTo(utils.TypeNames[event.Type]) {
+					fmt.Printf("Notifying user for event")
 					NotifyUser(p.Nick, p.Profile.Email, event.Subject, event.Message)
 				}
 			}
