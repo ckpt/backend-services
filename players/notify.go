@@ -3,9 +3,10 @@ package players
 import (
 	//	"errors"
 	"encoding/json"
+	"os"
+
 	"github.com/ckpt/backend-services/utils"
 	mailgun "github.com/mailgun/mailgun-go"
-	"os"
 	//	"github.com/m4rw3r/uuid"
 )
 
@@ -14,7 +15,7 @@ import "fmt"
 func StartEventProcessor() error {
 	events, err := eventqueue.Consume()
 	if err != nil {
-		fmt.Printf("Could not consume events:\nError was:\n%v\n",  err)
+		fmt.Printf("Could not consume events:\nError was:\n%v\n", err)
 		return err
 	}
 	go func() {
@@ -36,18 +37,10 @@ func StartEventProcessor() error {
 				notifyPlayer := false
 				fmt.Printf("Checking if user %s should be notified\n", p.Nick)
 				if p.User.SubscribedTo(utils.TypeNames[event.Type]) {
-					notifyPlayer = true
-				}
-				for _, rp := range event.RestrictedTo {
-					notifyPlayer = false
-					if rp == p.UUID {
-						notifyPlayer = true
-						break
+					fmt.Printf("Notifying user for event")
+					if p.Nick == "Panzer" {
+						NotifyUser(p.Nick, p.Profile.Email, event.Subject, event.Message)
 					}
-				}
-				if notifyPlayer {
-					fmt.Printf("Notifying user for event\n")
-					NotifyUser(p.Nick, p.Profile.Email, event.Subject, event.Message)
 				}
 			}
 			msg.Ack(false)
