@@ -5,11 +5,11 @@ machine:
 dependencies:
   post:
     - docker info
-    - docker build -t ckpt/backend-services .
+    - docker build -t ckpt/backend-services:dev .
 
 deployment:
-  hub: 
-    branch: master
+  development:
+    branch: dev
     commands:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push ckpt/backend-services
+      - docker push ckpt/backend-services:dev
