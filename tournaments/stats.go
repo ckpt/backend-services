@@ -112,7 +112,9 @@ func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 			}
 		}
 	}
-	periods = append(periods, *currentPeriod)
+	if (currentPeriod != nil) {
+		periods = append(periods, *currentPeriod)
+	}
 	return periods
 }
 
