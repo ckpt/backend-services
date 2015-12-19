@@ -34,10 +34,9 @@ func StartEventProcessor() error {
 				continue
 			}
 			for _, p := range allPlayers {
-				notifyPlayer := false
 				fmt.Printf("Checking if user %s should be notified\n", p.Nick)
 				if p.User.SubscribedTo(utils.TypeNames[event.Type]) {
-					fmt.Printf("Notifying user for event")
+					fmt.Printf("Notifying user for event\n")
 					if p.Nick == "Panzer" {
 						NotifyUser(p.Nick, p.Profile.Email, event.Subject, event.Message)
 					}
