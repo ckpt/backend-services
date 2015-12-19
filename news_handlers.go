@@ -71,49 +71,25 @@ func updateNewsItem(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	return nil
 }
 
-// Vote -> Comment
-// func addnewsVote(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-// 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-// 	uuid, err := uuid.FromString(c.URLParams["uuid"])
-// 	news, err := newss.newsByUUID(uuid)
-// 	if err != nil {
-// 		return &appError{err, "Cant find news", 404}
-// 	}
-// 	tempInfo := new(newss.Vote)
-// 	decoder := json.NewDecoder(r.Body)
-// 	if err := decoder.Decode(tempInfo); err != nil {
-// 		return &appError{err, "Invalid JSON", 400}
-// 	}
+func addNewsComment(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	newsUUID, err := uuid.FromString(c.URLParams["uuid"])
+	newsItem, err := news.NewsItemByUUID(newsUUID)
+	if err != nil {
+		return &appError{err, "Cant find NewsItem", 404}
+	}
+	tempInfo := new(news.Comment)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(tempInfo); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
 
-// 	if err := news.AddVote(tempInfo.Player, tempInfo.Score); err != nil {
-// 		return &appError{err, "Failed to add news vote", 500}
-// 	}
-// 	w.WriteHeader(204)
-// 	return nil
-// }
-
-// func updatenewsVote(c web.C, w http.ResponseWriter, r *http.Request) *appError {
-// 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-// 	newsuuid, err := uuid.FromString(c.URLParams["uuid"])
-// 	playeruuid, err := uuid.FromString(c.URLParams["playeruuid"])
-// 	news, err := newss.newsByUUID(newsuuid)
-// 	if err != nil {
-// 		return &appError{err, "Cant find news", 404}
-// 	}
-
-// 	tempInfo := new(newss.Vote)
-// 	decoder := json.NewDecoder(r.Body)
-// 	if err := decoder.Decode(tempInfo); err != nil {
-// 		return &appError{err, "Invalid JSON", 400}
-// 	}
-
-// 	if err := news.RemoveVote(playeruuid); err != nil {
-// 		return &appError{err, "Failed to remove old news vote when updating", 500}
-// 	}
-
-// 	if err := news.AddVote(playeruuid, tempInfo.Score); err != nil {
-// 		return &appError{err, "Failed to add updated news vote", 500}
-// 	}
-// 	w.WriteHeader(204)
-// 	return nil
-// }
+	if !c.Env["authIsAdmin"].(bool) || tempInfo.Player.IsZero() {
+		tempInfo.Player = c.Env["authPlayer"].(uuid.UUID)
+	}
+	if err := newsItem.AddComment(tempInfo.Player, tempInfo.Content); err != nil {
+		return &appError{err, "Failed to add news comment", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}

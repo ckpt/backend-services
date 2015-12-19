@@ -38,6 +38,8 @@ const (
 )
 
 type Comment struct {
+	UUID    uuid.UUID `json:uuid`
+	Created time.Time `json:created`
 	Player  uuid.UUID `json:player`
 	Content string    `json:content`
 }
@@ -107,26 +109,40 @@ func (c *NewsItem) UpdateNewsItem(ci NewsItem) error {
 	return nil
 }
 
-// TODO: Comments
-// func (c *NewsItem) AddVote(player uuid.UUID, score int) error {
-// 	vote := Vote{Player: player, Score: score}
-// 	c.Votes = append(c.Votes, vote)
-// 	err := storage.Store(c)
-// 	if err != nil {
-// 		return errors.New(err.Error() + " - Could not store updated NewsItem info with added vote")
-// 	}
-// 	return nil
-// }
+func (c *NewsItem) AddComment(player uuid.UUID, content string) error {
+	comment := Comment{Player: player, Content: content}
+	comment.UUID, _ = uuid.V4()
+	comment.Created = time.Now()
+	c.Comments = append(c.Comments, comment)
+	err := storage.Store(c)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store updated NewsItem info with added comment")
+	}
+	return nil
+}
 
-// func (c *NewsItem) RemoveVote(player uuid.UUID) error {
-// 	for i, v := range c.Votes {
-// 		if v.Player == player {
-// 			c.Votes = append(c.Votes[:i], c.Votes[i+1:]...)
-// 		}
-// 	}
-// 	err := storage.Store(c)
-// 	if err != nil {
-// 		return errors.New(err.Error() + " - Could not store updated NewsItem info with removed vote")
-// 	}
-// 	return nil
-// }
+func (c *NewsItem) RemoveComment(uuid uuid.UUID) error {
+	for i, v := range c.Comments {
+		if v.UUID == uuid {
+			c.Comments = append(c.Comments[:i], c.Comments[i+1:]...)
+		}
+	}
+	err := storage.Store(c)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store updated NewsItem info with removed comment")
+	}
+	return nil
+}
+
+func (c *NewsItem) RemoveCommentsByPlayer(player uuid.UUID) error {
+	for i, v := range c.Comments {
+		if v.Player == player {
+			c.Comments = append(c.Comments[:i], c.Comments[i+1:]...)
+		}
+	}
+	err := storage.Store(c)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store updated NewsItem info with removed comments")
+	}
+	return nil
+}

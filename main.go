@@ -144,7 +144,8 @@ func main() {
 	goji.Get("/news/:uuid", appHandler(getNewsItem))
 	goji.Patch("/news/:uuid", appHandler(updateNewsItem))
 	goji.Post("/news", appHandler(createNewNewsItem))
-	// TODO: Comments
+	goji.Post("/news/:uuid/comments", appHandler(addNewsComment))
+	// TODO: Comment updates/deletion
 
 	goji.Serve()
 }
