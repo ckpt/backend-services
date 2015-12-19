@@ -38,10 +38,10 @@ const (
 )
 
 type Comment struct {
-	UUID    uuid.UUID `json:uuid`
-	Created time.Time `json:created`
-	Player  uuid.UUID `json:player`
-	Content string    `json:content`
+	UUID    uuid.UUID `json:"uuid"`
+	Created time.Time `json:"created"`
+	Player  uuid.UUID `json:"player"`
+	Content string    `json:"content"`
 }
 
 // A storage interface for News
