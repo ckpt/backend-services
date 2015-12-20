@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/ckpt/backend-services/tournaments"
 	"github.com/m4rw3r/uuid"
 	"github.com/zenazn/goji/web"
@@ -114,6 +115,53 @@ func setTournamentResult(c web.C, w http.ResponseWriter, r *http.Request) *appEr
 	w.WriteHeader(204)
 	return nil
 }
+
+func addTournamentNoShow(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	tID, err := uuid.FromString(c.URLParams["uuid"])
+	tournament, err := tournaments.TournamentByUUID(tID)
+	if err != nil {
+		return &appError{err, "Cant find tournament", 404}
+	}
+
+	absenteeData := new(tournaments.Absentee)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(absenteeData); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if !c.Env["authIsAdmin"].(bool) || absenteeData.Player.IsZero() {
+		absenteeData.Player = c.Env["authPlayer"].(uuid.UUID)
+	}
+
+	if err := tournament.AddNoShow(absenteeData.Player, absenteeData.Reason); err != nil {
+		return &appError{err, "Failed to set absentee for tournament", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+func removeTournamentNoShow(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	tID, err := uuid.FromString(c.URLParams["uuid"])
+	tournament, err := tournaments.TournamentByUUID(tID)
+	if err != nil {
+		return &appError{err, "Cant find tournament", 404}
+	}
+
+	pID, err := uuid.FromString(c.URLParams["playeruuid"])
+
+	if !c.Env["authIsAdmin"].(bool) || pID != c.Env["authPlayer"].(uuid.UUID) {
+		return &appError{errors.New("Unauthorized"), "Must be given player or admin to remove absentee", 403}
+	}
+
+	if err := tournament.RemoveNoShow(pID); err != nil {
+		return &appError{err, "Failed to remove absentee for tournament", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
 
 func getTournamentResult(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

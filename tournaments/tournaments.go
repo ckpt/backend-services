@@ -11,8 +11,9 @@ import (
 var storage TournamentStorage = NewRedisTournamentStorage()
 
 type Absentee struct {
-	Player uuid.UUID `json:"player"`
-	Reason string    `json:"reason"`
+	Player   uuid.UUID `json:"player"`
+	Reported time.Time `json:"reported"`
+	Reason   string    `json:"reason"`
 }
 
 type Result []uuid.UUID
@@ -209,6 +210,38 @@ func (t *Tournament) SetResult(result Result) error {
 	err := storage.Store(t)
 	if err != nil {
 		return errors.New(err.Error() + " - Could not store tournament result")
+	}
+	return nil
+}
+
+func (t *Tournament) AddNoShow(player uuid.UUID, reason string) error {
+	for _, a := range t.Noshows {
+		if a.Player == player {
+			return errors.New("Noshow already registered")
+		}
+	}
+
+	absentee := Absentee{Player: player, Reason: reason}
+	absentee.Reported = time.Now()
+	t.Noshows = append(t.Noshows, absentee)
+
+	err := storage.Store(t)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store tournament with added noshow")
+	}
+	return nil
+}
+
+func (t *Tournament) RemoveNoShow(player uuid.UUID) error {
+	for i, a := range t.Noshows {
+		if a.Player == player {
+			t.Noshows = append(t.Noshows[:i], t.Noshows[i+1:]...)
+		}
+	}
+
+	err := storage.Store(t)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store tournament with removed noshow")
 	}
 	return nil
 }
