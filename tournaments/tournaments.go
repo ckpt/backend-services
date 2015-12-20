@@ -2,13 +2,18 @@ package tournaments
 
 import (
 	"errors"
+	"os"
 	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
+	"github.com/ckpt/backend-services/utils"
 	"time"
 )
 
 // We use dummy in memory storage for now
 var storage TournamentStorage = NewRedisTournamentStorage()
+
+// Init a message queue
+var eventqueue utils.AMQPQueue = utils.NewRMQ(os.Getenv("CKPT_AMQP_URL"), "ckpt.events")
 
 type Absentee struct {
 	Player   uuid.UUID `json:"player"`
@@ -229,6 +234,10 @@ func (t *Tournament) AddNoShow(player uuid.UUID, reason string) error {
 	if err != nil {
 		return errors.New(err.Error() + " - Could not store tournament with added noshow")
 	}
+	eventqueue.Publish(utils.CKPTEvent{
+		Type: utils.TOURNAMENT_EVENT,
+		Subject: "Fravær registrert",
+		Message: "Det er registrert nytt fravær på ckpt.no!",})
 	return nil
 }
 
