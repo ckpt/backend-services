@@ -118,6 +118,11 @@ func (c *NewsItem) AddComment(player uuid.UUID, content string) error {
 	if err != nil {
 		return errors.New(err.Error() + " - Could not store updated NewsItem info with added comment")
 	}
+	eventqueue.Publish(utils.CKPTEvent{
+		Type: utils.NEWS_EVENT,
+		RestrictedTo: []uuid.UUID{c.Author,},
+		Subject: "Kommentar registrert",
+		Message: "Det er registrert ny kommentar på en av dine bidrag på ckpt.no!",})
 	return nil
 }
 

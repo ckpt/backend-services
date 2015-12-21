@@ -188,6 +188,7 @@ func TournamentsByPeriod(from time.Time, to time.Time) (Tournaments, error) {
 }
 
 func (t *Tournament) UpdateInfo(tdata Info) error {
+	locationChange := (tdata.Location != t.Info.Location)
 	if err := mergo.MergeWithOverwrite(&t.Info, tdata); err != nil {
 		return errors.New(err.Error() + " - Could not update tournament info")
 	}
@@ -196,6 +197,12 @@ func (t *Tournament) UpdateInfo(tdata Info) error {
 	err := storage.Store(t)
 	if err != nil {
 		return errors.New(err.Error() + " - Could not store updated tournament info")
+	}
+	if (locationChange) {
+		eventqueue.Publish(utils.CKPTEvent{
+			Type: utils.TOURNAMENT_EVENT,
+			Subject: "Vertskap registrert",
+			Message: "Det er registrert nytt vertskap for en turnering på ckpt.no!",})
 	}
 	return nil
 }
@@ -216,6 +223,10 @@ func (t *Tournament) SetResult(result Result) error {
 	if err != nil {
 		return errors.New(err.Error() + " - Could not store tournament result")
 	}
+	eventqueue.Publish(utils.CKPTEvent{
+		Type: utils.TOURNAMENT_EVENT,
+		Subject: "Resultater registrert",
+		Message: "Det er registrert nye resultater på ckpt.no!",})
 	return nil
 }
 

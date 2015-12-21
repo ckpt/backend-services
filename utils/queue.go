@@ -3,6 +3,7 @@ package utils
 import (
     "encoding/json"
     "github.com/streadway/amqp"
+	"github.com/m4rw3r/uuid"
 )
 
 // An interface for a message queue
@@ -30,9 +31,10 @@ var TypeNames = []string{
 }
 
 type CKPTEvent struct {
-    Type EventType `json:"type"`
-    Subject string `json:"subject"`
-    Message string `json:"message"`
+    Type EventType           `json:"type"`
+    RestrictedTo []uuid.UUID `json:"restricted_to"`
+    Subject string           `json:"subject"`
+    Message string           `json:"message"`
 }
 
 type RMQ struct {
