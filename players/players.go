@@ -59,7 +59,7 @@ type Debt struct {
 	Description string    `json:"description"`
 	Amount      int       `json:"amount"`
 	Created     time.Time `json:"created"`
-	Settled     time.Time `josn:"settled"`
+	Settled     time.Time `json:"settled"`
 }
 
 // A complaint from another player
