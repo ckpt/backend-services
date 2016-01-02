@@ -2,12 +2,12 @@ package players
 
 import (
 	"errors"
+	"github.com/ckpt/backend-services/utils"
 	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
-	"github.com/ckpt/backend-services/utils"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 	"os"
+	"time"
 )
 
 // We use dummy in memory storage for now
@@ -15,7 +15,6 @@ var storage PlayerStorage = NewRedisPlayerStorage()
 
 // Init a message queue
 var eventqueue utils.AMQPQueue = utils.NewRMQ(os.Getenv("CKPT_AMQP_URL"), "ckpt.events")
-
 
 // A Player is a player in CKPT, current or former.o// It also contains a User.
 type Player struct {
@@ -63,8 +62,8 @@ type Complaint struct {
 }
 
 type Votes struct {
-	Winner uuid.UUID  `json:"winner"`
-	Loser  uuid.UUID  `json:"loser"`
+	Winner uuid.UUID `json:"winner"`
+	Loser  uuid.UUID `json:"loser"`
 }
 
 // A storage interface for Players
@@ -185,12 +184,12 @@ func (p *Player) AddDebt(d Debt) error {
 		return errors.New(err.Error() + " - Could not set Debt data")
 	}
 	newDebt.UUID, _ = uuid.V4()
-	if (d.Created.IsZero()) {
+	if d.Created.IsZero() {
 		newDebt.Created = time.Now()
 	} else {
 		newDebt.Created = d.Created
 	}
-	if (!d.Settled.IsZero()) {
+	if !d.Settled.IsZero() {
 		newDebt.Settled = d.Settled
 	}
 	newDebt.Debitor = p.UUID

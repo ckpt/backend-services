@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
-	"fmt"
 
 	"github.com/rs/cors"
 	"github.com/zenazn/goji"

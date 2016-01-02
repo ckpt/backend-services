@@ -112,7 +112,7 @@ func YellowPeriods(tournaments Tournaments) []YellowPeriod {
 			}
 		}
 	}
-	if (currentPeriod != nil) {
+	if currentPeriod != nil {
 		periods = append(periods, *currentPeriod)
 	}
 	return periods
@@ -314,7 +314,7 @@ func SeasonStats(seasons []int) *PeriodStats {
 			sortedMonths = append(sortedMonths, int(k))
 		}
 		sort.Ints(sortedMonths)
-		for _,i := range sortedMonths {
+		for _, i := range sortedMonths {
 			v := byMonth[time.Month(i)]
 			monthStats := new(MonthStats)
 

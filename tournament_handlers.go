@@ -162,7 +162,6 @@ func removeTournamentNoShow(c web.C, w http.ResponseWriter, r *http.Request) *ap
 	return nil
 }
 
-
 func getTournamentResult(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	tID, err := uuid.FromString(c.URLParams["uuid"])

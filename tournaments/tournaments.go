@@ -2,10 +2,10 @@ package tournaments
 
 import (
 	"errors"
-	"os"
+	"github.com/ckpt/backend-services/utils"
 	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
-	"github.com/ckpt/backend-services/utils"
+	"os"
 	"time"
 )
 
@@ -198,11 +198,11 @@ func (t *Tournament) UpdateInfo(tdata Info) error {
 	if err != nil {
 		return errors.New(err.Error() + " - Could not store updated tournament info")
 	}
-	if (locationChange) {
+	if locationChange {
 		eventqueue.Publish(utils.CKPTEvent{
-			Type: utils.TOURNAMENT_EVENT,
+			Type:    utils.TOURNAMENT_EVENT,
 			Subject: "Vertskap registrert",
-			Message: "Det er registrert nytt vertskap for en turnering på ckpt.no!",})
+			Message: "Det er registrert nytt vertskap for en turnering på ckpt.no!"})
 	}
 	return nil
 }
@@ -224,9 +224,9 @@ func (t *Tournament) SetResult(result Result) error {
 		return errors.New(err.Error() + " - Could not store tournament result")
 	}
 	eventqueue.Publish(utils.CKPTEvent{
-		Type: utils.TOURNAMENT_EVENT,
+		Type:    utils.TOURNAMENT_EVENT,
 		Subject: "Resultater registrert",
-		Message: "Det er registrert nye resultater på ckpt.no!",})
+		Message: "Det er registrert nye resultater på ckpt.no!"})
 	return nil
 }
 
@@ -246,9 +246,9 @@ func (t *Tournament) AddNoShow(player uuid.UUID, reason string) error {
 		return errors.New(err.Error() + " - Could not store tournament with added noshow")
 	}
 	eventqueue.Publish(utils.CKPTEvent{
-		Type: utils.TOURNAMENT_EVENT,
+		Type:    utils.TOURNAMENT_EVENT,
 		Subject: "Fravær registrert",
-		Message: "Det er registrert nytt fravær på ckpt.no!",})
+		Message: "Det er registrert nytt fravær på ckpt.no!"})
 	return nil
 }
 

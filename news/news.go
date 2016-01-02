@@ -2,10 +2,10 @@ package news
 
 import (
 	"errors"
-	"os"
+	"github.com/ckpt/backend-services/utils"
 	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
-	"github.com/ckpt/backend-services/utils"
+	"os"
 	"time"
 )
 
@@ -70,9 +70,9 @@ func NewNewsItem(itemdata NewsItem, author uuid.UUID) (*NewsItem, error) {
 		return nil, errors.New(err.Error() + " - Could not write NewsItem to storage")
 	}
 	eventqueue.Publish(utils.CKPTEvent{
-		Type: utils.NEWS_EVENT,
+		Type:    utils.NEWS_EVENT,
 		Subject: "Nytt bidrag lagt ut",
-		Message: "Det er lagt ut et nytt bidrag på ckpt.no!",})
+		Message: "Det er lagt ut et nytt bidrag på ckpt.no!"})
 	return c, nil
 }
 
@@ -119,10 +119,10 @@ func (c *NewsItem) AddComment(player uuid.UUID, content string) error {
 		return errors.New(err.Error() + " - Could not store updated NewsItem info with added comment")
 	}
 	eventqueue.Publish(utils.CKPTEvent{
-		Type: utils.NEWS_EVENT,
-		RestrictedTo: []uuid.UUID{c.Author,},
-		Subject: "Kommentar registrert",
-		Message: "Det er registrert ny kommentar på en av dine bidrag på ckpt.no!",})
+		Type:         utils.NEWS_EVENT,
+		RestrictedTo: []uuid.UUID{c.Author},
+		Subject:      "Kommentar registrert",
+		Message:      "Det er registrert ny kommentar på en av dine bidrag på ckpt.no!"})
 	return nil
 }
 
