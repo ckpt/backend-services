@@ -356,6 +356,33 @@ func resetPlayerDebts(c web.C, w http.ResponseWriter, r *http.Request) *appError
 	return nil
 }
 
+func setPlayerVotes(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	nVotes := new(players.Votes)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(nVotes); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if !c.Env["authIsAdmin"].(bool) && c.Env["authPlayer"].(uuid.UUID) != pUUID {
+		return &appError{errors.New("Unauthorized"), "Must be player or admin to set votes", 403}
+	}
+
+	err = player.SetVotes(*nVotes)
+	if err != nil {
+		return &appError{err, "Failed to set votes", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
 func testPlayerNotify(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 

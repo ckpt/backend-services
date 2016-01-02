@@ -16,13 +16,6 @@ var storage PlayerStorage = NewRedisPlayerStorage()
 // Init a message queue
 var eventqueue utils.AMQPQueue = utils.NewRMQ(os.Getenv("CKPT_AMQP_URL"), "ckpt.events")
 
-// Constants
-type VoteType int
-
-const (
-	VOTE_FAV VoteType = iota
-	VOTE_LOSER
-)
 
 // A Player is a player in CKPT, current or former.o// It also contains a User.
 type Player struct {
@@ -37,7 +30,7 @@ type Player struct {
 	// of the other players, indexed by uuid as string
 	Gossip     map[string]string `json:"gossip"`
 	Complaints []Complaint       `json:"complaints"`
-	Votes      []Vote            `json:"votes"`
+	Votes      Votes             `json:"votes"`
 	// Debts where this player is the debitor
 	Debts []Debt `json:"debts"`
 }
@@ -69,9 +62,9 @@ type Complaint struct {
 	Content string  `json:"content"`
 }
 
-type Vote struct {
-	From *Player  `json:"from"`
-	Type VoteType `json:"type"`
+type Votes struct {
+	Winner uuid.UUID  `json:"winner"`
+	Loser  uuid.UUID  `json:"loser"`
 }
 
 // A storage interface for Players
@@ -251,4 +244,14 @@ func (creditor *Player) Credits() ([]Debt, error) {
 		}
 	}
 	return credits, nil
+}
+func (p *Player) SetVotes(v Votes) error {
+	if err := mergo.MergeWithOverwrite(&p.Votes, v); err != nil {
+		return errors.New(err.Error() + " - Could not set Votes data")
+	}
+	err := storage.Store(p)
+	if err != nil {
+		return errors.New("Could not set votes")
+	}
+	return nil
 }
