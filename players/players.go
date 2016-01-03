@@ -219,7 +219,7 @@ func (p *Player) SettleDebt(debtuuid uuid.UUID) error {
 		Type:         utils.PLAYER_EVENT,
 		RestrictedTo: []uuid.UUID{p.UUID},
 		Subject:      "Gjeld tilbakebetalt",
-		Message:      "Et av dine utestående krav er markert som innfridd på ckpt.no!"})
+		Message:      "Et av dine gjeldsposter er innfridd på ckpt.no!"})
 	return nil
 }
 func (p *Player) ResetDebt() error {
