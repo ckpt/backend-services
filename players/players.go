@@ -198,11 +198,16 @@ func (p *Player) AddDebt(d Debt) error {
 	if err != nil {
 		return errors.New("Could not add debt")
 	}
+	eventqueue.Publish(utils.CKPTEvent{
+		Type:         utils.PLAYER_EVENT,
+		RestrictedTo: []uuid.UUID{p.UUID},
+		Subject:      "Gjeld registrert",
+		Message:      "Det er registrert et nytt gjeldskrav mot deg på ckpt.no!"})
 	return nil
 }
-func (p *Player) SettleDebt(uuid uuid.UUID) error {
+func (p *Player) SettleDebt(debtuuid uuid.UUID) error {
 	for i, debt := range p.Debts {
-		if debt.UUID == uuid {
+		if debt.UUID == debtuuid {
 			p.Debts[i].Settled = time.Now()
 		}
 	}
@@ -210,6 +215,11 @@ func (p *Player) SettleDebt(uuid uuid.UUID) error {
 	if err != nil {
 		return errors.New("Could not settle debt")
 	}
+	eventqueue.Publish(utils.CKPTEvent{
+		Type:         utils.PLAYER_EVENT,
+		RestrictedTo: []uuid.UUID{p.UUID},
+		Subject:      "Gjeld tilbakebetalt",
+		Message:      "Et av dine utestående krav er markert som innfridd på ckpt.no!"})
 	return nil
 }
 func (p *Player) ResetDebt() error {
