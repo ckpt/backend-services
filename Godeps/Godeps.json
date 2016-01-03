@@ -1,7 +1,14 @@
 {
-	"ImportPath": "github.com/ckpt/backend-services",
+	"ImportPath": ".",
 	"GoVersion": "go1.2.1",
+	"Packages": [
+		"github.com/ckpt/backend-services"
+	],
 	"Deps": [
+		{
+			"ImportPath": "github.com/ckpt/backend-services",
+			"Rev": "60f7f72cda6f726b567d686dbeb873b849eb523b"
+		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
 			"Rev": "a47585eaae68b1d14b02940d2af1b9194f3caa9c"
@@ -20,8 +27,20 @@
 			"Rev": "e3318cd4732c87ed59b1d4320dad2ff88fd184f7"
 		},
 		{
+			"ImportPath": "github.com/mailgun/mailgun-go",
+			"Rev": "56726ce4cd9da46e8d8b10a7257d12f69752b67d"
+		},
+		{
+			"ImportPath": "github.com/mbanzon/simplehttp",
+			"Rev": "04c542e7ac706a25820090f274ea6a4f39a63326"
+		},
+		{
 			"ImportPath": "github.com/rs/cors",
 			"Rev": "5e4ce6bc0ecd3472f6f943666d84876691be2ced"
+		},
+		{
+			"ImportPath": "github.com/streadway/amqp",
+			"Rev": "b4f3ceab0337f013208d31348b578d83c0064744"
 		},
 		{
 			"ImportPath": "github.com/zenazn/goji",
