@@ -151,7 +151,7 @@ func removeTournamentNoShow(c web.C, w http.ResponseWriter, r *http.Request) *ap
 
 	pID, err := uuid.FromString(c.URLParams["playeruuid"])
 
-	if !c.Env["authIsAdmin"].(bool) || pID != c.Env["authPlayer"].(uuid.UUID) {
+	if !c.Env["authIsAdmin"].(bool) && pID != c.Env["authPlayer"].(uuid.UUID) {
 		return &appError{errors.New("Unauthorized"), "Must be given player or admin to remove absentee", 403}
 	}
 
