@@ -340,15 +340,15 @@ func (s ByWinRatioTotal) Less(i, j int) bool {
 type ByNumPlayed struct{ PlayerStandings }
 
 func (s ByNumPlayed) Less(i, j int) bool {
-	aP := s.PlayerStandings[i].NumPlayed
-	bP := s.PlayerStandings[j].NumPlayed
-	aT := s.PlayerStandings[i].NumTotal
-	bT := s.PlayerStandings[j].NumTotal
+	aP := float64(s.PlayerStandings[i].NumPlayed)
+	bP := float64(s.PlayerStandings[j].NumPlayed)
+	aT := float64(s.PlayerStandings[i].NumTotal)
+	bT := float64(s.PlayerStandings[j].NumTotal)
 
 	aR := (aT - aP) / aT
 	bR := (bT - bP) / bT
 
-	if aR > bR {
+	if aR < bR {
 		return true
 	}
 
