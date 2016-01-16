@@ -280,3 +280,24 @@ func (p *Player) SetVotes(v Votes) error {
 	}
 	return nil
 }
+func (p *Player) SetGossip(g map[string]string) error {
+	if p.Gossip == nil {
+		p.Gossip = make(map[string]string)
+	}
+	for player, gossip := range g {
+		p.Gossip[player] = gossip
+	}
+	err := storage.Store(p)
+	if err != nil {
+		return errors.New("Could not set gossip")
+	}
+	return nil
+}
+func (p *Player) ResetGossip() error {
+	p.Gossip = nil
+	err := storage.Store(p)
+	if err != nil {
+		return errors.New("Could not reset gossip")
+	}
+	return nil
+}

@@ -439,6 +439,55 @@ func addPlayerQuote(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	return nil
 }
 
+func setPlayerGossip(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	nGossip := make(map[string]string)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&nGossip); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if !c.Env["authIsAdmin"].(bool) && c.Env["authPlayer"].(uuid.UUID) != pUUID {
+		return &appError{errors.New("Unauthorized"), "Must be player or admin to set gossip", 403}
+	}
+
+	err = player.SetGossip(nGossip)
+	if err != nil {
+		return &appError{err, "Failed to set gossip", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+func resetPlayerGossip(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	if !c.Env["authIsAdmin"].(bool) && c.Env["authPlayer"].(uuid.UUID) != pUUID {
+		return &appError{errors.New("Unauthorized"), "Must be admin or player to reset gossip", 403}
+	}
+
+	err = player.ResetGossip()
+	if err != nil {
+		return &appError{err, "Failed to reset gossip", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+
 
 func testPlayerNotify(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
