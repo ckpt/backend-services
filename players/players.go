@@ -178,6 +178,14 @@ func (p *Player) SetActive(active bool) error {
 	}
 	return nil
 }
+func (p *Player) AddQuote(q string) error {
+	p.Quotes = append(p.Quotes, q)
+	err := storage.Store(p)
+	if err != nil {
+		return errors.New("Could not add quote")
+	}
+	return nil
+}
 func (p *Player) AddDebt(d Debt) error {
 	newDebt := new(Debt)
 	if err := mergo.MergeWithOverwrite(newDebt, d); err != nil {

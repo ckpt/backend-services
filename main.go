@@ -92,6 +92,7 @@ func main() {
 	goji.Get("/players/quotes", appHandler(getAllPlayerQuotes))
 	goji.Get("/players/:uuid", appHandler(getPlayer))
 	goji.Put("/players/:uuid", appHandler(updatePlayer))
+	goji.Post("/players/:uuid/quotes", appHandler(addPlayerQuote))
 	goji.Get("/players/:uuid/profile", appHandler(getPlayerProfile))
 	goji.Put("/players/:uuid/profile", appHandler(updatePlayerProfile))
 	goji.Get("/players/:uuid/user", appHandler(getUserForPlayer))

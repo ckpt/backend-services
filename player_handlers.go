@@ -383,6 +383,36 @@ func setPlayerVotes(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	return nil
 }
 
+func addPlayerQuote(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+	
+	var q string
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&q); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+
+	if !c.Env["authIsAdmin"].(bool) && c.Env["authPlayer"].(uuid.UUID) == pUUID {
+		return &appError{errors.New("Unauthorized"), "Must be other player or admin to add quote", 403}
+	}
+
+	err = player.AddQuote(q)
+	if err != nil {
+		return &appError{err, "Failed to add quote", 500}
+	}
+	w.Header().Set("Location", "/players/"+pUUID.String())
+	w.WriteHeader(201)
+	return nil
+}
+
+
 func testPlayerNotify(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
