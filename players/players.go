@@ -154,6 +154,14 @@ func (p *Player) SetUserSettings(settings UserSettings) error {
 	return nil
 }
 
+func (p *Player) SetUserAdmin(adminStatus bool) error {
+	p.User.Admin = adminStatus
+	if err := storage.Store(p); err != nil {
+		return errors.New(err.Error() + " - Could not change player user admin status")
+	}
+	return nil
+}
+
 func (p *Player) SetProfile(profile Profile) error {
 	p.Profile = profile
 	err := storage.Store(p)

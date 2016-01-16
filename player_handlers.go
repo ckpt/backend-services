@@ -239,6 +239,33 @@ func setUserSettings(c web.C, w http.ResponseWriter, r *http.Request) *appError 
 	return nil
 }
 
+func setUserAdmin(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	pUUID, err := uuid.FromString(c.URLParams["uuid"])
+
+	if !c.Env["authIsAdmin"].(bool) {
+		return &appError{errors.New("Unauthorized"), "Must be admin to set admin status", 403}
+	}
+
+	player, err := players.PlayerByUUID(pUUID)
+	if err != nil {
+		return &appError{err, "Cant find player", 404}
+	}
+
+	var adminState bool
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&adminState); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if err := player.SetUserAdmin(adminState); err != nil {
+		return &appError{err, "Failed to change settings for user", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+
 func showPlayerDebt(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	pUUID, err := uuid.FromString(c.URLParams["uuid"])
