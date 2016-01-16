@@ -469,7 +469,7 @@ func NewStandings(tournaments Tournaments) PlayerStandings {
 		// Check if player has enough tournaments
 		// TODO: Is this a property of season?
 		enough := false
-		if numPlayed[player] >= 10 {
+		if numPlayed[player] >= 11 {
 			enough = true
 		}
 
