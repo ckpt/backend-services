@@ -14,6 +14,7 @@ import "fmt"
 func StartEventProcessor() error {
 	events, err := eventqueue.Consume()
 	if err != nil {
+		fmt.Printf("Could not consume events:\nError was:\n%v\n",  err)
 		return err
 	}
 	go func() {
