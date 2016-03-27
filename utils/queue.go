@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"encoding/json"
 	"github.com/m4rw3r/uuid"
 	"github.com/streadway/amqp"
@@ -57,6 +58,7 @@ func (rmq *RMQ) Publish(event CKPTEvent) error {
 		ContentEncoding: "utf-8",
 		Body:            msg,
 	}); err != nil {
+		fmt.Printf("Could not publish msg:\n%s\nError was:\n%v\n", msg, err)
 		return err
 	}
 	return nil
