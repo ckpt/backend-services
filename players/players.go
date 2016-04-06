@@ -41,6 +41,7 @@ type Profile struct {
 	Birthday    time.Time `json:"birthday"`
 	Email       string    `json:"email"`
 	Description string    `json:"description"`
+	Allergies   string    `json:"allergies"`
 }
 
 // A debt to another player (hte creditor)
