@@ -1,0 +1,30 @@
+package: github.com/ckpt/backend-services
+import:
+- package: github.com/ckpt/backend-services
+  version: 60f7f72cda6f726b567d686dbeb873b849eb523b
+- package: github.com/garyburd/redigo
+  version: a47585eaae68b1d14b02940d2af1b9194f3caa9c
+  subpackages:
+  - internal
+  - redis
+- package: github.com/imdario/mergo
+  version: 61a52852277811e93e06d28e0d0c396284a7730b
+- package: github.com/m4rw3r/uuid
+  version: e3318cd4732c87ed59b1d4320dad2ff88fd184f7
+- package: github.com/mailgun/mailgun-go
+  version: 56726ce4cd9da46e8d8b10a7257d12f69752b67d
+- package: github.com/mbanzon/simplehttp
+  version: 84fe3995e05e1e699312bd012b9fe5ac3da6c63c
+- package: github.com/rs/cors
+  version: 5e4ce6bc0ecd3472f6f943666d84876691be2ced
+- package: github.com/streadway/amqp
+  version: b4f3ceab0337f013208d31348b578d83c0064744
+- package: github.com/zenazn/goji
+  version: eaa649ab77fd613bb3d44dde6b4e6043a01eee66
+  subpackages:
+  - web
+- package: golang.org/x/crypto
+  version: f6a608df624ae17d57958a8a294c66da81730577
+  subpackages:
+  - bcrypt
+  - blowfish
