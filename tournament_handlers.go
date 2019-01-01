@@ -116,6 +116,27 @@ func setTournamentResult(c web.C, w http.ResponseWriter, r *http.Request) *appEr
 	return nil
 }
 
+func setTournamentBountyHunters(c web.C, w http.ResponseWriter, r *http.Request) *appError {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	tID, err := uuid.FromString(c.URLParams["uuid"])
+	tournament, err := tournaments.TournamentByUUID(tID)
+	if err != nil {
+		return &appError{err, "Cant find tournament", 404}
+	}
+
+	bhData := make(map[uuid.UUID][]uuid.UUID)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&bhData); err != nil {
+		return &appError{err, "Invalid JSON", 400}
+	}
+
+	if err := tournament.SetBountyHunters(bhData); err != nil {
+		return &appError{err, "Failed to update tournament bounty hunters", 500}
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
 func addTournamentNoShow(c web.C, w http.ResponseWriter, r *http.Request) *appError {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	tID, err := uuid.FromString(c.URLParams["uuid"])
