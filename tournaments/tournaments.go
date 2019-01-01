@@ -28,6 +28,8 @@ type Bet struct {
 	Prediction Result    `json:"prediction"`
 }
 
+type BountyHunters map[uuid.UUID][]uuid.UUID
+
 type Info struct {
 	Scheduled time.Time `json:"scheduled"`
 	MovedFrom time.Time `json:"movedFrom"`
@@ -38,13 +40,14 @@ type Info struct {
 }
 
 type Tournament struct {
-	UUID    uuid.UUID  `json:"uuid"`
-	Info    Info       `json:"info"`
-	Noshows []Absentee `json:"noshows"`
-	Result  Result     `json:"result"`
-	Played  bool       `json:"played"`
-	Moved   bool       `json:"moved"`
-	Bets    []Bet      `json:"bets"`
+	UUID          uuid.UUID     `json:"uuid"`
+	Info          Info          `json:"info"`
+	Noshows       []Absentee    `json:"noshows"`
+	Result        Result        `json:"result"`
+	Played        bool          `json:"played"`
+	Moved         bool          `json:"moved"`
+	Bets          []Bet         `json:"bets"`
+	BountyHunters BountyHunters `json:"bountyHunters"`
 }
 
 type Tournaments []*Tournament
@@ -227,6 +230,17 @@ func (t *Tournament) SetResult(result Result) error {
 		Type:    utils.TOURNAMENT_EVENT,
 		Subject: "Resultater registrert",
 		Message: "Det er registrert nye resultater på ckpt.no!"})
+	return nil
+}
+
+func (t *Tournament) SetBountyHunters(bh BountyHunters) error {
+	t.Played = true
+	t.BountyHunters = bh
+	err := storage.Store(t)
+	if err != nil {
+		return errors.New(err.Error() + " - Could not store tournament bounty hunters")
+	}
+
 	return nil
 }
 

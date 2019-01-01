@@ -129,6 +129,7 @@ func main() {
 	goji.Put("/tournaments/:uuid/played", appHandler(setTournamentPlayed))
 	goji.Get("/tournaments/:uuid/result", appHandler(getTournamentResult))
 	goji.Put("/tournaments/:uuid/result", appHandler(setTournamentResult))
+	goji.Put("/tournaments/:uuid/bountyhunters", appHandler(setTournamentBountyHunters))
 	goji.Post("/tournaments/:uuid/noshows", appHandler(addTournamentNoShow))
 	goji.Delete("/tournaments/:uuid/noshows/:playeruuid", appHandler(removeTournamentNoShow))
 

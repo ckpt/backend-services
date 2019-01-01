@@ -14,10 +14,11 @@ type YellowPeriod struct {
 }
 
 type MonthStats struct {
-	Year  int        `json:"year"`
-	Month time.Month `json:"month"`
-	Best  uuid.UUID  `json:"best"`
-	Worst uuid.UUID  `json:"worst"`
+	Year         int        `json:"year"`
+	Month        time.Month `json:"month"`
+	Best         uuid.UUID  `json:"best"`
+	Worst        uuid.UUID  `json:"worst"`
+	BountyHunter uuid.UUID  `json:"bountyhunter"`
 }
 
 type PeriodStats struct {
@@ -51,6 +52,10 @@ type SeasonTitles struct {
 		Uuid   uuid.UUID `json:"uuid"`
 		Months int       `json:"months"`
 	} `json:"loserOfTheYear"`
+	BountyWinner struct {
+		Uuid      uuid.UUID `json:"uuid"`
+		Knockouts int       `json:"knockouts"`
+	} `json:"bountyWinner"`
 }
 
 func BestPlayer(tournaments Tournaments) (PlayerStandings, bool) {
@@ -67,6 +72,17 @@ func BestPlayer(tournaments Tournaments) (PlayerStandings, bool) {
 func WorstPlayer(tournaments Tournaments) (PlayerStandings, bool) {
 	standings := NewStandings(tournaments)
 	standings.ByWorstPlayer()
+	if standings[0].Results.Equals(standings[1].Results) {
+		// It's still a tie
+		return standings, true
+	}
+	return standings, false
+}
+
+func BountyHunter(tournaments Tournaments) (PlayerStandings, bool) {
+	standings := NewStandings(tournaments)
+	standings.ByKnockouts()
+
 	if standings[0].Results.Equals(standings[1].Results) {
 		// It's still a tie
 		return standings, true
@@ -278,6 +294,17 @@ func Titles(seasons []int) []*SeasonTitles {
 			}
 		}
 
+		if season >= 2019 {
+			seasonStandings.ByKnockouts()
+			for i := range seasonStandings {
+				if seasonStandings[i].Enough {
+					p, knockouts := seasonStandings[i].Player, seasonStandings[i].Knockouts
+					titles.BountyWinner.Uuid = p
+					titles.BountyWinner.Knockouts = knockouts
+					break
+				}
+			}
+		}
 		// FIXME: This is missing tie breaks..
 		p, d := mostYellowDaysInSeason(seasonStats.YellowPeriods, season)
 		titles.MostYellowDays.Uuid = p
@@ -369,6 +396,27 @@ func SeasonStats(seasons []int) *PeriodStats {
 			}
 			monthStats.Worst = worstplayer
 
+			if season >= 2019 {
+				bh, tie := BountyHunter(v)
+				bountyhunter := bh[0].Player
+				if tie {
+					var tiebreakTournaments Tournaments
+					for j := 1; j <= i; j++ {
+						tiebreakTournaments = append(tiebreakTournaments, byMonth[time.Month(j)]...)
+					}
+					tiebh, tie := BountyHunter(tiebreakTournaments)
+					if tie {
+						println("    Warning: Tied for bounty hunter of the month", i, "in year", season)
+					}
+					for p := range tiebh {
+						if tiebh[p].Player == bh[0].Player || tiebh[p].Player == bh[1].Player {
+							bountyhunter = tiebh[p].Player
+							break
+						}
+					}
+				}
+				monthStats.BountyHunter = bountyhunter
+			}
 			stats.MonthStats = append(stats.MonthStats, monthStats)
 		}
 	}
