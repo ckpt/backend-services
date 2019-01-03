@@ -3,9 +3,10 @@ package players
 import (
 	//	"errors"
 	"encoding/json"
+	"os"
+
 	"github.com/ckpt/backend-services/utils"
 	mailgun "github.com/mailgun/mailgun-go"
-	"os"
 	//	"github.com/m4rw3r/uuid"
 )
 
@@ -14,7 +15,7 @@ import "fmt"
 func StartEventProcessor() error {
 	events, err := eventqueue.Consume()
 	if err != nil {
-		fmt.Printf("Could not consume events:\nError was:\n%v\n",  err)
+		fmt.Printf("Could not consume events:\nError was:\n%v\n", err)
 		return err
 	}
 	go func() {

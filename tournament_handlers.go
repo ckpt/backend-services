@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/ckpt/backend-services/tournaments"
-	"github.com/m4rw3r/uuid"
-	"github.com/zenazn/goji/web"
 	"net/http"
 	"sort"
 	"strconv"
+
+	"github.com/ckpt/backend-services/tournaments"
+	"github.com/m4rw3r/uuid"
+	"github.com/zenazn/goji/web"
 )
 
 func createNewTournament(c web.C, w http.ResponseWriter, r *http.Request) *appError {
