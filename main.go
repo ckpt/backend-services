@@ -69,7 +69,7 @@ func main() {
 	//
 	err := players.StartEventProcessor()
 	if err != nil {
-		fmt.Printf("%+v", err.Error)
+		fmt.Printf("%+v", err.Error())
 		println("Could not initialize event queue. Exiting")
 		os.Exit(1)
 	}

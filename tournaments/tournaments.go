@@ -2,11 +2,12 @@ package tournaments
 
 import (
 	"errors"
+	"os"
+	"time"
+
 	"github.com/ckpt/backend-services/utils"
 	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
-	"os"
-	"time"
 )
 
 // We use dummy in memory storage for now

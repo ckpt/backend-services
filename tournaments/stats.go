@@ -1,9 +1,10 @@
 package tournaments
 
 import (
-	"github.com/m4rw3r/uuid"
 	"sort"
 	"time"
+
+	"github.com/m4rw3r/uuid"
 )
 
 type YellowPeriod struct {

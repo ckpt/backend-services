@@ -2,6 +2,7 @@ package caterings
 
 import (
 	"errors"
+
 	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
 )
@@ -22,8 +23,8 @@ type Info struct {
 }
 
 type Vote struct {
-	Player uuid.UUID `json:player`
-	Score  int       `json:score`
+	Player uuid.UUID `json:"player"`
+	Score  int       `json:"score"`
 }
 
 // A storage interface for Caterings
