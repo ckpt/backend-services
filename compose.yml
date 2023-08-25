@@ -1,0 +1,24 @@
+services:
+  api:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      - redis
+      - rabbitmq
+    restart: on-failure
+    environment:
+      CKPT_REDIS: "redis:6379"
+      CKPT_AMQP_URL: "amqp://guest:guest@rabbitmq:5672"
+  redis:
+    image: "redis:6-alpine"
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    volumes:
+      - type: bind
+        source: ./devdata
+        target: /data
+      - type: bind
+        source: ./devdata/redis-config.conf
+        target: /usr/local/etc/redis/redis.conf
+  rabbitmq:
+    image: "rabbitmq"
