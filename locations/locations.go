@@ -1,8 +1,10 @@
 package locations
 
 import (
-	"dario.cat/mergo"
 	"errors"
+	"fmt"
+
+	"dario.cat/mergo"
 	"github.com/m4rw3r/uuid"
 )
 
@@ -10,8 +12,8 @@ import (
 var storage LocationStorage = NewRedisLocationStorage()
 
 type Coord struct {
-	Lat  float64 `json:lat`
-	Long float64 `json:long`
+	Lat  float64 `json:"lat"`
+	Long float64 `json:"long"`
 }
 
 type Location struct {
@@ -86,7 +88,7 @@ func (l *Location) RemovePicture(picIndex int) error {
 	l.Pictures = append(l.Pictures[:picIndex], l.Pictures[picIndex+1:]...)
 	err := storage.Store(l)
 	if err != nil {
-		return errors.New(err.Error() + " - Could not delete picture at index " + string(picIndex))
+		return errors.New(err.Error() + " - Could not delete picture at index " + fmt.Sprintf("%d", picIndex))
 	}
 	return nil
 }

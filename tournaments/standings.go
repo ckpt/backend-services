@@ -404,7 +404,7 @@ func getActivePlayers(tournaments Tournaments) ([]uuid.UUID, int) {
 		}
 	}
 
-	for k, _ := range seenPlayer {
+	for k := range seenPlayer {
 		activePlayers = append(activePlayers, k)
 	}
 
