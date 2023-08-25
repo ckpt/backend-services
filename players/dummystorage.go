@@ -2,8 +2,9 @@ package players
 
 import (
 	"errors"
-	"github.com/m4rw3r/uuid"
 	"time"
+
+	"github.com/m4rw3r/uuid"
 )
 
 type DummyPlayerStorage struct {
@@ -15,7 +16,7 @@ type DummyPlayerStorage struct {
 func (dps *DummyPlayerStorage) init() {
 	dummyUUIDs := createUUIDs(2)
 	dps.users = []*User{
-		&User{
+		{
 			Username: "mortenk",
 			password: "admin123",
 			Apikey:   "secretsupersecret",
@@ -24,7 +25,7 @@ func (dps *DummyPlayerStorage) init() {
 		},
 	}
 	dps.players = []*Player{
-		&Player{
+		{
 			UUID: dummyUUIDs[0],
 			Profile: Profile{
 				Birthday: time.Date(1979, time.April, 14, 0, 0, 0, 0, time.Local),
@@ -36,7 +37,7 @@ func (dps *DummyPlayerStorage) init() {
 			User:   *dps.users[0],
 			Active: true,
 		},
-		&Player{
+		{
 			UUID: dummyUUIDs[1],
 			Profile: Profile{
 				Birthday: time.Date(1979, time.October, 20, 0, 0, 0, 0, time.Local),

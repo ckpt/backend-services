@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
+	"dario.cat/mergo"
 	"github.com/ckpt/backend-services/utils"
-	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
 )
 

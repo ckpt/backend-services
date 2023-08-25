@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"os"
 
+	"fmt"
+
 	"github.com/ckpt/backend-services/utils"
 	mailgun "github.com/mailgun/mailgun-go"
 	//	"github.com/m4rw3r/uuid"
 )
-
-import "fmt"
 
 func StartEventProcessor() error {
 	events, err := eventqueue.Consume()
@@ -63,7 +63,7 @@ func NotifyUser(name, email, subject, message string) {
 	fmt.Printf("%s\n", subject)
 
 	mailto := fmt.Sprintf("%s <%s>", name, email)
-	gun := mailgun.NewMailgun("mail.ckpt.no", os.Getenv("CKPT_MAILGUN_KEY"), "pubkey-b3e133632123a0da24d1e2c5842039b6")
+	gun := mailgun.NewMailgun("mail.ckpt.no", os.Getenv("CKPT_MAILGUN_KEY"))
 	m := mailgun.NewMessage("CKPT <notifications@mail.ckpt.no>", subject, message, mailto)
 	m.AddHeader("Content-Type", "text/plain; charset=\"utf-8\"")
 	response, id, err := gun.Send(m)

@@ -1,5 +1,11 @@
-FROM busybox:ubuntu-14.04
-COPY backend-services .
-COPY docker-entrypoint.sh .
+# build stage
+FROM golang:alpine AS build-env
+ADD . /src
+RUN cd /src && go build -o backend-services
+
+# final stage
+FROM alpine
+WORKDIR /app
 EXPOSE 8000
-CMD ./docker-entrypoint.sh
+COPY --from=build-env /src/backend-services /app/
+ENTRYPOINT ./backend-services

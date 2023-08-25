@@ -3,7 +3,7 @@ package caterings
 import (
 	"errors"
 
-	"github.com/imdario/mergo"
+	"dario.cat/mergo"
 	"github.com/m4rw3r/uuid"
 )
 

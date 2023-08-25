@@ -1,9 +1,9 @@
 package news
 
 import (
+	"dario.cat/mergo"
 	"errors"
 	"github.com/ckpt/backend-services/utils"
-	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
 	"os"
 	"time"

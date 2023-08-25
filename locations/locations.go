@@ -1,8 +1,8 @@
 package locations
 
 import (
+	"dario.cat/mergo"
 	"errors"
-	"github.com/imdario/mergo"
 	"github.com/m4rw3r/uuid"
 )
 
